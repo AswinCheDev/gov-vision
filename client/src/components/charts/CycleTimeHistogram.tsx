@@ -115,11 +115,11 @@ export default function CycleTimeHistogram({ filters }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
               <XAxis
                 dataKey="bucket"
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "'Outfit', sans-serif" }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "'Outfit', sans-serif" }}
                 axisLine={false} tickLine={false}
               />
               <Tooltip content={<TooltipContent />} />

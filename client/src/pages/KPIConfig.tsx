@@ -115,7 +115,7 @@ export default function KPIConfigPage() {
     <div style={{ padding: 24, background: "#F5F6FA", minHeight: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 18 }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "Outfit, sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>KPI Config</h1>
+          <h1 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>KPI Config</h1>
           <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: 13 }}>Adjust target and threshold values for the dashboard KPI cards.</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -158,8 +158,8 @@ export default function KPIConfigPage() {
   )
 }
 
-const primaryButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "none", background: "#0F172A", color: "white", fontWeight: 800, fontFamily: "Outfit, sans-serif", cursor: "pointer" }
-const secondaryButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "1px solid #D9E1EC", background: "white", color: "#334155", fontWeight: 800, fontFamily: "Outfit, sans-serif", cursor: "pointer" }
-const inputStyle: React.CSSProperties = { width: 120, padding: "8px 10px", borderRadius: 10, border: "1px solid #D9E1EC", fontFamily: "Outfit, sans-serif", fontSize: 13, outline: "none" }
+const primaryButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "none", background: "#0F172A", color: "white", fontWeight: 800, fontFamily: "'Outfit', sans-serif", cursor: "pointer" }
+const secondaryButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "1px solid #D9E1EC", background: "white", color: "#334155", fontWeight: 800, fontFamily: "'Outfit', sans-serif", cursor: "pointer" }
+const inputStyle: React.CSSProperties = { width: 120, padding: "8px 10px", borderRadius: 10, border: "1px solid #D9E1EC", fontFamily: "'Outfit', sans-serif", fontSize: 13, outline: "none" }
 const thStyle: React.CSSProperties = { padding: "12px 14px", borderBottom: "1px solid #E2E8F0" }
 const tdStyle: React.CSSProperties = { padding: "12px 14px", fontSize: 13, color: "#334155" }

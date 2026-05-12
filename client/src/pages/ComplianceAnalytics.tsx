@@ -2,10 +2,20 @@ import { useEffect, useMemo, useState } from "react"
 import ReactECharts from "echarts-for-react"
 import type { EChartsOption } from "echarts"
 import { api, getKpiSummary, getRiskHeatmap, getTopViolatedPolicies } from "../services/api"
-import type { IKpiSummary, IRiskHeatmapRow } from "../types"
+import type { IKpiSummary, IRiskHeatmapRow, RiskLevel } from "../types"
+import { RISK_LEVEL_COLORS } from "../types"
 import SkeletonLoader from "../components/SkeletonLoader"
+import AccentDropdown from "../components/AccentDropdown"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
+import KPICard from "../components/KPICard"
+
+const Icons = {
+  compliance: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width="15" height="15"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+}
 
 const DEPARTMENT_OPTIONS = [
+  { label: "Organization Wide", value: "" },
   { label: "Finance", value: "FI001" },
   { label: "Human Resources", value: "HR002" },
   { label: "Operations", value: "OP003" },
@@ -18,20 +28,22 @@ function todayString(): string {
 }
 
 const selectStyle: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #D9E1EC",
   background: "white",
-  fontFamily: "IBM Plex Sans, sans-serif",
-  fontSize: 13,
+  border: "1px solid #E2E6ED",
+  borderRadius: "8px",
+  padding: "10px 14px",
+  fontSize: "14px",
+  fontFamily: "'Outfit', sans-serif",
+  color: "#374151",
+  outline: "none",
+  cursor: "pointer",
   minWidth: 160,
-  outline: "none"
 }
 
 export default function ComplianceAnalytics() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState(todayString())
-  const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>(DEPARTMENT_OPTIONS.map(option => option.value))
+  const [deptId, setDeptId] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [kpi, setKpi] = useState<IKpiSummary | null>(null)
   const [trend, setTrend] = useState<Array<{ department: string; data: Array<{ date: string; complianceRate: number }> }>>([])
@@ -39,7 +51,7 @@ export default function ComplianceAnalytics() {
   const [topPolicies, setTopPolicies] = useState<Array<{ policyId: string; policyName: string; violationCount: number; departments: string[] }>>([])
   const [policyFilter, setPolicyFilter] = useState<string>("")
 
-  const deptQuery = selectedDeptIds.join(",")
+  const deptQuery = deptId
 
   useEffect(() => {
     let cancelled = false
@@ -96,8 +108,8 @@ export default function ComplianceAnalytics() {
     return {
       tooltip: { position: "top" },
       grid: { top: 10, left: 140, right: 20, bottom: 60 },
-      xAxis: { type: "category", data: dateKeys, splitArea: { show: true }, axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" } },
-      yAxis: { type: "category", data: departmentNames, splitArea: { show: true }, axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 11, color: "#334155" } },
+      xAxis: { type: "category", data: dateKeys, splitArea: { show: true }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
+      yAxis: { type: "category", data: departmentNames, splitArea: { show: true }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#334155" } },
       visualMap: {
         min: 0,
         max: 100,
@@ -114,30 +126,106 @@ export default function ComplianceAnalytics() {
   const severityChartOption: EChartsOption = {
     tooltip: { trigger: "axis" },
     grid: { top: 20, right: 16, bottom: 36, left: 44 },
-    xAxis: { type: "category", data: severitySummary.map(row => row.level), axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" } },
-    yAxis: { type: "value", axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" }, splitLine: { lineStyle: { color: "#EEF2F7" } } },
-    series: [{ type: "bar", data: severitySummary.map(row => row.count), itemStyle: { color: "#3B82F6", borderRadius: [6, 6, 0, 0] } }]
+    xAxis: { type: "category", data: severitySummary.map(row => row.level), axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
+    yAxis: { type: "value", axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" }, splitLine: { lineStyle: { color: "#EEF2F7" } } },
+    series: [{ 
+      type: "bar", 
+      data: severitySummary.map(row => ({
+        value: row.count,
+        itemStyle: { color: RISK_LEVEL_COLORS[row.level as RiskLevel] }
+      })), 
+      itemStyle: { borderRadius: [6, 6, 0, 0] } 
+    }]
   }
 
   return (
     <div style={{ padding: 24, display: "grid", gap: 20, background: "#F5F6FA", minHeight: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "IBM Plex Sans, sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>Compliance Analytics</h1>
+          <div style={{ fontSize:"12px", color:"#94A3B8", marginBottom:"4px", display:"flex", alignItems:"center", gap:"6px", fontFamily:"'Outfit', sans-serif" }}>
+            <span>Home</span><span style={{color:"#CBD5E1"}}>›</span>
+            <span>Analytics</span><span style={{color:"#CBD5E1"}}>›</span>
+            <span style={{color:"#374151",fontWeight:600}}>Compliance Analytics</span>
+          </div>
+          <h1 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>Compliance Analytics</h1>
           <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: 13 }}>Compliance trend, severity breakdown, department heatmap and top violated policies.</p>
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <select
-            multiple
-            value={selectedDeptIds}
-            onChange={event => setSelectedDeptIds(Array.from(event.target.selectedOptions).map(option => option.value))}
-            style={{ ...selectStyle, minWidth: 220, height: 112 }}
-          >
-            {DEPARTMENT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-          <input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} style={selectStyle} />
-          <input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} style={selectStyle} />
+          <AccentDropdown
+            value={deptId}
+            options={DEPARTMENT_OPTIONS}
+            onChange={value => setDeptId(value)}
+            width="200px"
+          />
+          <div style={{ position: "relative" }}>
+            <DatePicker
+              selected={new Date(dateFrom)}
+              onChange={(date: Date | null) => {
+                if (date) setDateFrom(date.toISOString().split("T")[0])
+              }}
+              dateFormat="dd MMM yyyy"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="scroll"
+              popperPlacement="bottom-start"
+              maxDate={new Date(dateTo)}
+              minDate={new Date("2024-01-01")}
+              customInput={
+                <input
+                  style={{ ...selectStyle, padding: "10px 30px 10px 14px", width: "140px", minWidth: "140px" }}
+                />
+              }
+            />
+            <svg
+              viewBox="0 0 24 24"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <div style={{ position: "relative" }}>
+            <DatePicker
+              selected={new Date(dateTo)}
+              onChange={(date: Date | null) => {
+                if (date) setDateTo(date.toISOString().split("T")[0])
+              }}
+              dateFormat="dd MMM yyyy"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="scroll"
+              popperPlacement="bottom-start"
+              minDate={new Date(dateFrom)}
+              maxDate={new Date("2026-12-31")}
+              customInput={
+                <input
+                  style={{ ...selectStyle, padding: "10px 30px 10px 14px", width: "140px", minWidth: "140px" }}
+                />
+              }
+            />
+            <svg
+              viewBox="0 0 24 24"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -145,9 +233,17 @@ export default function ComplianceAnalytics() {
         <SkeletonLoader />
       ) : (
         <>
-          <div style={{ background: "white", borderRadius: 18, border: "1px solid #E2E8F0", padding: 18 }}>
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B", fontWeight: 700, fontFamily: "IBM Plex Sans, sans-serif" }}>Overall Compliance</div>
-            <div style={{ marginTop: 8, fontSize: 42, fontWeight: 800, color: "#0F172A", fontFamily: "IBM Plex Sans, sans-serif" }}>{Number((kpi?.complianceRate ?? 0).toFixed(1))}%</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: 16 }}>
+            <KPICard 
+              title="Compliance Rate" 
+              value={Number((kpi?.complianceRate ?? 0).toFixed(1))}
+              unit="%" 
+              icon={Icons.compliance} 
+              accentColor="#41A471" 
+              bgGradient="linear-gradient(140deg,#26CC95,#0A9871)" 
+              tone="soft" 
+              size="md" 
+            />
           </div>
 
           <section style={sectionStyle}>
@@ -157,7 +253,7 @@ export default function ComplianceAnalytics() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 20 }}>
             <section style={sectionStyle}>
-              <h2 style={headingStyle}>Violation Severity Breakdown</h2>
+              <h2 style={headingStyle}>Risk Severity Breakdown</h2>
               <ReactECharts option={severityChartOption} style={{ height: 300 }} />
             </section>
 
@@ -170,10 +266,15 @@ export default function ComplianceAnalytics() {
           <section style={sectionStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <h2 style={headingStyle}>Top Violated Policies</h2>
-              <select value={policyFilter} onChange={event => setPolicyFilter(event.target.value)} style={selectStyle}>
-                <option value="">All policies</option>
-                {topPolicies.map(row => <option key={row.policyId} value={row.policyId}>{row.policyName}</option>)}
-              </select>
+              <AccentDropdown
+                value={policyFilter}
+                options={[
+                  { label: "All policies", value: "" },
+                  ...topPolicies.map(row => ({ label: row.policyName, value: row.policyId }))
+                ]}
+                onChange={value => setPolicyFilter(value)}
+                width="200px"
+              />
             </div>
 
             <div style={{ overflowX: "auto" }}>
@@ -207,10 +308,10 @@ function buildTrendOption(trend: Array<{ department: string; data: Array<{ date:
   const dates = Array.from(new Set(trend.flatMap(row => row.data.map(point => point.date)))).sort()
   return {
     tooltip: { trigger: "axis" },
-    legend: { bottom: 0, textStyle: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" } },
+    legend: { bottom: 0, textStyle: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     grid: { top: 18, right: 20, bottom: 42, left: 42 },
-    xAxis: { type: "category", data: dates, axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B", rotate: 0 } },
-    yAxis: { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%", fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" } },
+    xAxis: { type: "category", data: dates, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B", rotate: 0 } },
+    yAxis: { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%", fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     series: trend.map((row, index) => ({
       type: "line",
       name: row.department,
@@ -227,6 +328,6 @@ function buildTrendOption(trend: Array<{ department: string; data: Array<{ date:
 
 const COLORS = ["#0EA5E9", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"]
 const sectionStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E8F0", borderRadius: 18, padding: 18, boxShadow: "0 1px 6px rgba(15,23,42,0.05)" }
-const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "IBM Plex Sans, sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
+const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
 const thStyle: React.CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #E2E8F0" }
 const tdStyle: React.CSSProperties = { padding: "12px 8px", fontSize: 13, color: "#334155" }

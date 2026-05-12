@@ -4,6 +4,8 @@ import type { EChartsOption } from "echarts"
 import { getDeptKpiSummary } from "../services/api"
 import type { IFilter, IKpiSummary } from "../types"
 import SkeletonLoader from "../components/SkeletonLoader"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 const DEPARTMENT_OPTIONS = [
   { label: "Finance", value: "FI001" },
@@ -98,7 +100,7 @@ export default function DepartmentPerformance() {
 
   const radarOption: EChartsOption = {
     tooltip: { trigger: "item" },
-    legend: { bottom: 0, textStyle: { fontFamily: "IBM Plex Sans", fontSize: 10, color: "#64748B" } },
+    legend: { bottom: 0, textStyle: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     radar: {
       indicator: METRICS.map(metric => ({ name: metric.label, max: metric.key === "totalDecisions" ? 1000 : metric.key === "violationCount" ? 100 : 100 })),
       splitArea: { areaStyle: { color: ["#fff", "#FAFBFD"] } }
@@ -128,7 +130,12 @@ export default function DepartmentPerformance() {
     <div style={{ padding: 24, display: "grid", gap: 20, background: "#F5F6FA", minHeight: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
-          <h1 style={{ margin: 0, fontFamily: "IBM Plex Sans, sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>Department Performance</h1>
+          <div style={{ fontSize:"12px", color:"#94A3B8", marginBottom:"4px", display:"flex", alignItems:"center", gap:"6px", fontFamily:"'Outfit', sans-serif" }}>
+            <span>Home</span><span style={{color:"#CBD5E1"}}>›</span>
+            <span>Analytics</span><span style={{color:"#CBD5E1"}}>›</span>
+            <span style={{color:"#374151",fontWeight:600}}>Department Performance</span>
+          </div>
+          <h1 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>Department Performance</h1>
           <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: 13 }}>Compare up to five departments on core KPI metrics.</p>
         </div>
 
@@ -136,8 +143,74 @@ export default function DepartmentPerformance() {
           <select multiple value={selectedDeptIds} onChange={event => setSelectedDeptIds(Array.from(event.target.selectedOptions).map(option => option.value).slice(0, 5))} style={{ ...selectStyle, height: 112, minWidth: 220 }}>
             {DEPARTMENT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <input type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} style={selectStyle} />
-          <input type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} style={selectStyle} />
+          <div style={{ position: "relative" }}>
+            <DatePicker
+              selected={new Date(dateFrom)}
+              onChange={(date: Date | null) => {
+                if (date) setDateFrom(date.toISOString().split("T")[0])
+              }}
+              dateFormat="dd MMM yyyy"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="scroll"
+              popperPlacement="bottom-start"
+              maxDate={new Date(dateTo)}
+              minDate={new Date("2024-01-01")}
+              customInput={
+                <input
+                  style={{ ...selectStyle, padding: "10px 30px 10px 14px", width: "140px", minWidth: "140px" }}
+                />
+              }
+            />
+            <svg
+              viewBox="0 0 24 24"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <div style={{ position: "relative" }}>
+            <DatePicker
+              selected={new Date(dateTo)}
+              onChange={(date: Date | null) => {
+                if (date) setDateTo(date.toISOString().split("T")[0])
+              }}
+              dateFormat="dd MMM yyyy"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="scroll"
+              popperPlacement="bottom-start"
+              minDate={new Date(dateFrom)}
+              maxDate={new Date("2026-12-31")}
+              customInput={
+                <input
+                  style={{ ...selectStyle, padding: "10px 30px 10px 14px", width: "140px", minWidth: "140px" }}
+                />
+              }
+            />
+            <svg
+              viewBox="0 0 24 24"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -212,8 +285,8 @@ function MetricBarCard({ title, rows, metricKey, highlighted }: { title: string;
   const option: EChartsOption = {
     grid: { top: 18, right: 16, bottom: 48, left: 42 },
     tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: rows.map(row => row.displayName), axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10, rotate: 0 } },
-    yAxis: { type: "value", splitLine: { lineStyle: { color: "#EEF2F7" } }, axisLabel: { fontFamily: "IBM Plex Sans", fontSize: 10 } },
+    xAxis: { type: "category", data: rows.map(row => row.displayName), axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, rotate: 0 } },
+    yAxis: { type: "value", splitLine: { lineStyle: { color: "#EEF2F7" } }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10 } },
     series: [{ type: "bar", data: rows.map(row => Number((row as any)[metricKey] ?? 0)), itemStyle: { color: highlighted ? "#3B82F6" : "rgba(59,130,246,0.35)", borderRadius: [6, 6, 0, 0] } }]
   }
 
@@ -227,8 +300,8 @@ function MetricBarCard({ title, rows, metricKey, highlighted }: { title: string;
 
 const COLORS = ["#0EA5E9", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"]
 const sectionStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E8F0", borderRadius: 18, padding: 18, boxShadow: "0 1px 6px rgba(15,23,42,0.05)" }
-const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "IBM Plex Sans, sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
-const selectStyle: React.CSSProperties = { padding: "10px 12px", borderRadius: 10, border: "1px solid #D9E1EC", background: "white", fontFamily: "IBM Plex Sans, sans-serif", fontSize: 13, minWidth: 160, outline: "none" }
-const tabButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "1px solid #D9E1EC", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "IBM Plex Sans, sans-serif" }
+const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
+const selectStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E6ED", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#374151", outline: "none", cursor: "pointer", minWidth: 160 }
+const tabButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 12, border: "1px solid #D9E1EC", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }
 const thStyle: React.CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #E2E8F0" }
 const tdStyle: React.CSSProperties = { padding: "12px 8px", fontSize: 13, color: "#334155" }

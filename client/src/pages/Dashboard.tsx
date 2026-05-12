@@ -75,135 +75,7 @@ function getDepartmentLabel(deptIdOrName: string): string {
   return match ? match.label : deptIdOrName
 }
 
-type DropdownOption = {
-  label: string
-  value: string
-}
-
-function AccentDropdown({
-  value,
-  options,
-  onChange,
-  width = "170px"
-}: {
-  value: string
-  options: DropdownOption[]
-  onChange: (value: string) => void
-  width?: string
-}) {
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const onMouseDown = (event: MouseEvent) => {
-      if (!rootRef.current) return
-      if (!rootRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-
-    window.addEventListener("mousedown", onMouseDown)
-    return () => window.removeEventListener("mousedown", onMouseDown)
-  }, [])
-
-  const selected = options.find(option => option.value === value) ?? options[0]
-
-  return (
-    <div ref={rootRef} style={{ position: "relative", width }}>
-      <button
-        type="button"
-        onClick={() => setOpen(prev => !prev)}
-        style={{
-          width: "100%",
-          padding: "7px 12px",
-          borderRadius: "8px",
-          border: open ? "1px solid var(--accent-600)" : "1px solid #E2E6ED",
-          background: "white",
-          fontSize: "12px",
-          fontWeight: 600,
-          color: "var(--accent-700)",
-          fontFamily: "'Outfit', sans-serif",
-          cursor: "pointer",
-          outline: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: open ? "0 0 0 3px var(--accent-ring)" : "none"
-        }}
-      >
-        <span>{selected?.label}</span>
-        <svg
-          viewBox="0 0 20 20"
-          width="14"
-          height="14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          style={{ color: "#6B7280", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}
-        >
-          <path d="M5 7.5 10 12.5 15 7.5" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            left: 0,
-            width: "100%",
-            background: "#FFFFFF",
-            border: "1px solid var(--accent-300)",
-            borderRadius: "10px",
-            boxShadow: "0 12px 28px rgba(15,23,42,0.12)",
-            padding: "5px",
-            zIndex: 60
-          }}
-        >
-          {options.map(option => {
-            const isSelected = option.value === value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value)
-                  setOpen(false)
-                }}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: isSelected ? "#E5E7EB" : "transparent",
-                  color: isSelected ? "#111827" : "#334155",
-                  borderRadius: "7px",
-                  textAlign: "left",
-                  padding: "7px 10px",
-                  fontSize: "12px",
-                  fontWeight: isSelected ? 700 : 500,
-                  fontFamily: "'Outfit', sans-serif",
-                  cursor: "pointer",
-                  transition: "background 0.15s ease,color 0.15s ease"
-                }}
-                onMouseEnter={event => {
-                  if (isSelected) return
-                  event.currentTarget.style.background = "#F3F4F6"
-                  event.currentTarget.style.color = "#1F2937"
-                }}
-                onMouseLeave={event => {
-                  if (isSelected) return
-                  event.currentTarget.style.background = "transparent"
-                  event.currentTarget.style.color = "#334155"
-                }}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
+import AccentDropdown, { type DropdownOption } from "../components/AccentDropdown"
 
 const TIMEFRAME_OPTIONS: DropdownOption[] = [
   { label: "Last 7 Days", value: "7" },
@@ -276,7 +148,6 @@ export default function Dashboard() {
   return (
     <div style={{ minHeight:"100vh", background:"#F5F6FA", fontFamily:"'Outfit',sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
         @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
         @keyframes liveTextBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes fadeSlideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
@@ -291,10 +162,10 @@ export default function Dashboard() {
           {/* Header */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:"12px" }}>
             <div>
-              <div style={{ fontSize:"12px", color:"#94A3B8", marginBottom:"4px", display:"flex", alignItems:"center", gap:"6px" }}>
+              <div style={{ fontSize:"12px", color:"#94A3B8", marginBottom:"4px", display:"flex", alignItems:"center", gap:"6px", fontFamily:"'Outfit', sans-serif" }}>
                 <span>Home</span><span style={{color:"#CBD5E1"}}>›</span>
-                <span>Dashboards</span><span style={{color:"#CBD5E1"}}>›</span>
-                <span style={{color:"#374151",fontWeight:600}}>Analytics</span>
+                <span>Analytics</span><span style={{color:"#CBD5E1"}}>›</span>
+                <span style={{color:"#374151",fontWeight:600}}>Dashboard</span>
               </div>
               <h1 style={{ fontSize:"22px", fontWeight:800, color:"#0F172A", margin:0, letterSpacing:"-0.5px" }}>
                 Analytics Dashboard
@@ -316,69 +187,103 @@ export default function Dashboard() {
 
               <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>From</span>
 
-              <DatePicker
-                selected={new Date(filters.dateFrom)}
-                onChange={(date: Date | null) => {
-                  if (date) setFilters(f => ({
-                    ...f, dateFrom: date.toISOString().split("T")[0]
-                  }))
-                }}
-                dateFormat="dd MMM yyyy"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="scroll"
-                popperPlacement="bottom-start"
-                maxDate={new Date(filters.dateTo)}
-                minDate={new Date("2024-01-01")}
-                customInput={
-                  <input
-                    style={{
-                      background: "white",
-                      border: "1px solid #E2E6ED",
-                      borderRadius: "8px",
-                      padding: "7px 12px",
-                      fontSize: "12px",
-                      fontFamily: "'Outfit', sans-serif",
-                      cursor: "pointer",
-                      width: "120px",
-                      outline: "none"
-                    }}
-                  />
-                }
-              />
+              <div style={{ position: "relative" }}>
+                <DatePicker
+                  selected={new Date(filters.dateFrom)}
+                  onChange={(date: Date | null) => {
+                    if (date) setFilters(f => ({
+                      ...f, dateFrom: date.toISOString().split("T")[0]
+                    }))
+                  }}
+                  dateFormat="dd MMM yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="scroll"
+                  popperPlacement="bottom-start"
+                  maxDate={new Date(filters.dateTo)}
+                  minDate={new Date("2024-01-01")}
+                  customInput={
+                    <input
+                      style={{
+                        background: "white",
+                        border: "1px solid #E2E6ED",
+                        borderRadius: "8px",
+                        padding: "10px 30px 10px 14px",
+                        fontSize: "14px",
+                        fontFamily: "'Outfit', sans-serif",
+                        cursor: "pointer",
+                        width: "140px",
+                        outline: "none",
+                        color: "#374151"
+                      }}
+                    />
+                  }
+                />
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
 
               <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>To</span>
 
-              <DatePicker
-                selected={new Date(filters.dateTo)}
-                onChange={(date: Date | null) => {
-                  if (date) setFilters(f => ({
-                    ...f, dateTo: date.toISOString().split("T")[0]
-                  }))
-                }}
-                dateFormat="dd MMM yyyy"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="scroll"
-                popperPlacement="bottom-start"
-                minDate={new Date(filters.dateFrom)}
-                maxDate={new Date("2026-12-31")}
-                customInput={
-                  <input
-                    style={{
-                      background: "white",
-                      border: "1px solid #E2E6ED",
-                      borderRadius: "8px",
-                      padding: "7px 12px",
-                      fontSize: "12px",
-                      fontFamily: "'Outfit', sans-serif",
-                      cursor: "pointer",
-                      width: "120px",
-                      outline: "none"
-                    }}
-                  />
-                }
-              />
+              <div style={{ position: "relative" }}>
+                <DatePicker
+                  selected={new Date(filters.dateTo)}
+                  onChange={(date: Date | null) => {
+                    if (date) setFilters(f => ({
+                      ...f, dateTo: date.toISOString().split("T")[0]
+                    }))
+                  }}
+                  dateFormat="dd MMM yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="scroll"
+                  popperPlacement="bottom-start"
+                  minDate={new Date(filters.dateFrom)}
+                  maxDate={new Date("2026-12-31")}
+                  customInput={
+                    <input
+                      style={{
+                        background: "white",
+                        border: "1px solid #E2E6ED",
+                        borderRadius: "8px",
+                        padding: "10px 30px 10px 14px",
+                        fontSize: "14px",
+                        fontFamily: "'Outfit', sans-serif",
+                        cursor: "pointer",
+                        width: "140px",
+                        outline: "none",
+                        color: "#374151"
+                      }}
+                    />
+                  }
+                />
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none" }}
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
 
               <AccentDropdown
                 value={filters.deptId ?? ""}
@@ -401,7 +306,7 @@ export default function Dashboard() {
             <KPICard key={`kpi-total-${refreshTick}`} title="Total Decisions" value={totalDecisions} icon={Icons.decisions} accentColor="#DBE5FF" bgGradient="linear-gradient(140deg,#6F88D6,#516CC1)" tone="hero" size="lg" />
             <KPICard key={`kpi-approval-${refreshTick}`} title="Approval Rate" value={approvalRate} unit="%" icon={Icons.approval} accentColor="#C9EFDF" bgGradient="linear-gradient(140deg,#6EAB95,#4E8D76)" tone="hero" size="lg" />
             <KPICard key={`kpi-rejection-${refreshTick}`} title="Rejection Rate" value={rejectionRate} unit="%" icon={Icons.rejection} accentColor="#FFD0D4" bgGradient="linear-gradient(140deg,#D47A87,#B95A68)" invertTrend tone="hero" size="lg" />
-            <KPICard key={`kpi-avg-${refreshTick}`} title="Avg Approval Time" value={Math.round(kpi?.avgCycleTimeHours??0)} unit="h" icon={Icons.cycle} accentColor="#FFE0C0" bgGradient="linear-gradient(140deg,#D8AF85,#BF946C)" tone="hero" size="lg" />
+            <KPICard key={`kpi-avg-${refreshTick}`} title="Avg Cycle Time" value={Math.round(kpi?.avgCycleTimeHours??0)} unit="h" icon={Icons.cycle} accentColor="#FFE0C0" bgGradient="linear-gradient(140deg,#D8AF85,#BF946C)" tone="hero" size="lg" />
 
             <KPICard key={`kpi-bottle-${refreshTick}`} title="Bottleneck Rate" value={Number((kpi?.bottleneckRate ?? 0).toFixed(1))} unit="%" icon={Icons.bottleneck} accentColor="#7879F5" bgGradient="linear-gradient(140deg,#A27BFF,#8F55F3)" tone="soft" size="md" />
             <KPICard key={`kpi-comp-${refreshTick}`} title="Compliance Rate" value={Number((kpi?.complianceRate??0).toFixed(1))} unit="%" icon={Icons.compliance} accentColor="#41A471" bgGradient="linear-gradient(140deg,#26CC95,#0A9871)" tone="soft" size="md" />

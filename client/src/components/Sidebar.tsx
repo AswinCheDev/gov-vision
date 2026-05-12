@@ -30,6 +30,7 @@ const reportsItem = {
 }
 
 const analyticsItems = [
+  dashboardItem,
   {
     label: "Decision Analytics",
     path: "/analytics/decisions",
@@ -284,36 +285,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
       {/* Nav Items */}
       <nav style={{ flex: 1, padding: "12px 10px", position: "relative", zIndex: 1 }}>
         <div style={{ marginBottom: "6px" }}>
-          <NavLink
-            key={dashboardItem.path}
-            to={dashboardItem.path}
-            end
-            title={dashboardItem.label}
-            style={({ isActive }) => ({
-              display: "flex",
-              alignItems: "center",
-              gap: collapsed ? "0" : "10px",
-              justifyContent: collapsed ? "center" : "flex-start",
-              padding: "10px 12px",
-              borderRadius: "10px",
-              marginBottom: "2px",
-              textDecoration: "none",
-              color: isActive ? "white" : "rgba(255,255,255,0.5)",
-              background: isActive
-                ? "var(--accent-grad-soft)"
-                : "transparent",
-              borderLeft: isActive ? "3px solid var(--accent-edge)" : "3px solid transparent",
-              transition: "all 0.18s ease",
-              fontSize: "13px",
-              fontWeight: isActive ? 600 : 400,
-              fontFamily: "'Outfit', sans-serif"
-            })}
-          >
-            {dashboardItem.icon}
-            {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dashboardItem.label}</span>}
-          </NavLink>
-
-          <div style={{ marginTop: "12px", marginBottom: "4px" }}>
+          <div style={{ marginBottom: "4px" }}>
             {!collapsed && (
               <div style={{
                 padding: "8px 12px 10px",

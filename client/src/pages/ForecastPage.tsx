@@ -211,7 +211,7 @@ export default function ForecastPage() {
         borderColor: "#E2E6ED",
         borderWidth: 1,
         textStyle: {
-          fontFamily: "IBM Plex Sans",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 12,
           color: "#1E293B"
         },
@@ -237,7 +237,7 @@ export default function ForecastPage() {
         axisTick: { show: false },
         axisLabel: {
           color: "#94A3B8",
-          fontFamily: "IBM Plex Sans",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 10,
           rotate: 0
         }
@@ -251,7 +251,7 @@ export default function ForecastPage() {
         splitLine: { lineStyle: { color: "#F1F5F9" } },
         axisLabel: {
           color: "#94A3B8",
-          fontFamily: "IBM Plex Sans",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 10
         }
       },
@@ -259,7 +259,7 @@ export default function ForecastPage() {
         top: 0,
         right: 0,
         textStyle: {
-          fontFamily: "IBM Plex Sans",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 11,
           color: "#64748B"
         },
