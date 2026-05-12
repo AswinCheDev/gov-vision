@@ -15,6 +15,10 @@ export default function TopBar({ anomalyCount = 0, openViolations = 0 }: TopBarP
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const currentUser = decodeToken()
+  const displayName = currentUser?.role
+    ? `${currentUser.role.charAt(0).toUpperCase()}${currentUser.role.slice(1)}`
+    : "User"
+  const displayInitial = displayName.charAt(0)
 
   const handleLogout = () => {
     clearToken()
@@ -186,7 +190,7 @@ export default function TopBar({ anomalyCount = 0, openViolations = 0 }: TopBarP
               color: "#1E293B",
               fontFamily: "'Outfit', sans-serif"
             }}>
-              {currentUser?.userId || "User"}
+              {displayName}
             </span>
             <span style={{
               fontSize: "11px",
@@ -216,7 +220,7 @@ export default function TopBar({ anomalyCount = 0, openViolations = 0 }: TopBarP
             border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 2px 8px rgba(15,23,42,0.22)"
           }}>
-            {(currentUser?.userId || "U")[0].toUpperCase()}
+            {displayInitial}
           </div>
 
           {/* Logout button */}

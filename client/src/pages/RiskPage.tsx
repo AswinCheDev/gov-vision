@@ -196,7 +196,7 @@ export default function RiskPage() {
   });
 
   // Summary counts for the header stat cards (exclude organization wide aggregate)
-  const dataForCounts = data.filter(r => r.department !== "Organization Wide");
+  const dataForCounts = filteredData.filter(r => r.department !== "Organization Wide");
   const counts = {
     Critical: dataForCounts.filter((r) => r.riskLevel === 'Critical').length,
     High: dataForCounts.filter((r) => r.riskLevel === 'High').length,
@@ -318,7 +318,7 @@ export default function RiskPage() {
           </div>
           {/* Pie chart — takes 1/3 width */}
           <div>
-            <RiskPieChart data={data} />
+            <RiskPieChart data={filteredData} />
           </div>
         </div>
       )}

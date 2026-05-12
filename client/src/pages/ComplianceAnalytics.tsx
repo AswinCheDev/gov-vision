@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import ReactECharts from "echarts-for-react"
 import type { EChartsOption } from "echarts"
-import { api, getKpiSummary, getRiskHeatmap, getTopViolatedPolicies } from "../services/api"
+import { api, getDeptKpiSummary, getKpiSummary, getRiskHeatmap, getTopViolatedPolicies } from "../services/api"
 import type { IKpiSummary, IRiskHeatmapRow, RiskLevel } from "../types"
 import { RISK_LEVEL_COLORS } from "../types"
 import SkeletonLoader from "../components/SkeletonLoader"
@@ -40,6 +40,17 @@ const selectStyle: React.CSSProperties = {
   minWidth: 160,
 }
 
+function formatFriendlyDate(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(date)
+}
+
 export default function ComplianceAnalytics() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState(todayString())
@@ -52,6 +63,7 @@ export default function ComplianceAnalytics() {
   const [policyFilter, setPolicyFilter] = useState<string>("")
 
   const deptQuery = deptId
+  const selectedDepartmentLabel = DEPARTMENT_OPTIONS.find(option => option.value === deptId)?.label ?? ""
 
   useEffect(() => {
     let cancelled = false
@@ -60,7 +72,7 @@ export default function ComplianceAnalytics() {
       setLoading(true)
       try {
         const [summary, policies, risk] = await Promise.all([
-          getKpiSummary({ dateFrom, dateTo, deptId: null }),
+          deptId ? getDeptKpiSummary(deptId, { dateFrom, dateTo, deptId }) : getKpiSummary({ dateFrom, dateTo, deptId: "" }),
           getTopViolatedPolicies(),
           getRiskHeatmap({ dateFrom, dateTo })
         ])
@@ -85,20 +97,36 @@ export default function ComplianceAnalytics() {
     return () => { cancelled = true }
   }, [dateFrom, dateTo, deptQuery])
 
-  const filteredTopPolicies = policyFilter ? topPolicies.filter(row => row.policyId === policyFilter || row.policyName === policyFilter) : topPolicies
+  const filteredTrend = deptId
+    ? trend.filter(entry => entry.department === selectedDepartmentLabel)
+    : trend
+
+  const filteredRiskRows = deptId
+    ? riskRows.filter(row => row.department === selectedDepartmentLabel || row.deptId === selectedDepartmentLabel)
+    : riskRows
+
+  const filteredTopPolicies = (() => {
+    const deptScopedPolicies = deptId
+      ? topPolicies.filter(row => row.departments.includes(selectedDepartmentLabel))
+      : topPolicies
+
+    return policyFilter
+      ? deptScopedPolicies.filter(row => row.policyId === policyFilter || row.policyName === policyFilter)
+      : deptScopedPolicies
+  })()
 
   const severitySummary = useMemo(() => {
     const order = ["Low", "Medium", "High", "Critical"]
     return order.map(level => ({
       level,
-      count: riskRows.reduce((sum, row: any) => sum + Number(row[level] ?? 0), 0)
+      count: filteredRiskRows.reduce((sum, row: any) => sum + Number(row[level] ?? 0), 0)
     }))
-  }, [riskRows])
+  }, [filteredRiskRows])
 
   const heatmapOption: EChartsOption = useMemo(() => {
-    const departmentNames = trend.map(entry => entry.department)
-    const dateKeys = Array.from(new Set(trend.flatMap(entry => entry.data.map(point => point.date)))).sort()
-    const data = trend.flatMap((entry, yIndex) =>
+    const departmentNames = filteredTrend.map(entry => entry.department)
+    const dateKeys = Array.from(new Set(filteredTrend.flatMap(entry => entry.data.map(point => point.date)))).sort()
+    const data = filteredTrend.flatMap((entry, yIndex) =>
       entry.data.map(point => {
         const xIndex = dateKeys.indexOf(point.date)
         return [xIndex, yIndex, Number(point.complianceRate.toFixed(1))]
@@ -106,9 +134,32 @@ export default function ComplianceAnalytics() {
     )
 
     return {
-      tooltip: { position: "top" },
+      tooltip: {
+        position: "top",
+        formatter: params => {
+          const point = params as { value?: [number, number, number]; data?: [number, number, number]; axisValue?: string }
+          const value = point.value ?? point.data
+          const dateLabel = point.axisValue ? formatFriendlyDate(point.axisValue) : ""
+          if (!value) return ""
+
+          const department = departmentNames[value[1]] ?? ""
+          const score = typeof value[2] === "number" ? value[2].toFixed(1) : value[2]
+
+          return `${dateLabel}<br/>${department}: ${score}%`
+        }
+      },
       grid: { top: 10, left: 140, right: 20, bottom: 60 },
-      xAxis: { type: "category", data: dateKeys, splitArea: { show: true }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
+      xAxis: {
+        type: "category",
+        data: dateKeys,
+        splitArea: { show: true },
+        axisLabel: {
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 10,
+          color: "#64748B",
+          formatter: value => formatFriendlyDate(String(value))
+        }
+      },
       yAxis: { type: "category", data: departmentNames, splitArea: { show: true }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#334155" } },
       visualMap: {
         min: 0,
@@ -121,7 +172,7 @@ export default function ComplianceAnalytics() {
       },
       series: [{ type: "heatmap", data, label: { show: false } }]
     }
-  }, [trend])
+  }, [filteredTrend])
 
   const severityChartOption: EChartsOption = {
     tooltip: { trigger: "axis" },
@@ -248,12 +299,12 @@ export default function ComplianceAnalytics() {
 
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Department Compliance Trend</h2>
-            <ReactECharts option={buildTrendOption(trend)} style={{ height: 320 }} />
+            <ReactECharts option={buildTrendOption(filteredTrend)} style={{ height: 320 }} />
           </section>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 20 }}>
             <section style={sectionStyle}>
-              <h2 style={headingStyle}>Risk Severity Breakdown</h2>
+              <h2 style={headingStyle}>Risk Level Distribution</h2>
               <ReactECharts option={severityChartOption} style={{ height: 300 }} />
             </section>
 
@@ -310,7 +361,7 @@ function buildTrendOption(trend: Array<{ department: string; data: Array<{ date:
     tooltip: { trigger: "axis" },
     legend: { bottom: 0, textStyle: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     grid: { top: 18, right: 20, bottom: 42, left: 42 },
-    xAxis: { type: "category", data: dates, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B", rotate: 0 } },
+    xAxis: { type: "category", data: dates, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B", rotate: 0, formatter: value => formatFriendlyDate(String(value)) } },
     yAxis: { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%", fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     series: trend.map((row, index) => ({
       type: "line",

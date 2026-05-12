@@ -287,7 +287,17 @@ function MetricBarCard({ title, rows, metricKey, highlighted }: { title: string;
     tooltip: { trigger: "axis" },
     xAxis: { type: "category", data: rows.map(row => row.displayName), axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, rotate: 0 } },
     yAxis: { type: "value", splitLine: { lineStyle: { color: "#EEF2F7" } }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10 } },
-    series: [{ type: "bar", data: rows.map(row => Number((row as any)[metricKey] ?? 0)), itemStyle: { color: highlighted ? "#3B82F6" : "rgba(59,130,246,0.35)", borderRadius: [6, 6, 0, 0] } }]
+    series: [{
+      type: "bar",
+      data: rows.map((row, index) => ({
+        value: Number((row as any)[metricKey] ?? 0),
+        itemStyle: {
+          color: COLORS[index % COLORS.length],
+          opacity: highlighted ? 1 : 0.82
+        }
+      })),
+      itemStyle: { borderRadius: [6, 6, 0, 0] }
+    }]
   }
 
   return (
