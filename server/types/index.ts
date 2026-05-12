@@ -1,4 +1,5 @@
 import { Request } from "express"
+import type { IUser as ContractUser } from "../../contracts"
 
 /*
   Server TypeScript types for GovVision.
@@ -43,23 +44,6 @@ export type {
 } from '../../contracts'
 
 /*
-  Server-specific type extensions
-*/
-
-/*
-  IUser represents the decoded JWT payload.
-  This is what sits on req.user after validateJWT runs.
-  
-  NOTE: Also defined in contracts/index.ts - this is the server
-  implementation interface (may have additional server-only fields).
-*/
-export interface IUser {
-  userId: string
-  role: string
-  department: string
-}
-
-/*
   Declaration merging — adds req.user to Express Request.
   Without this block, TypeScript will error on every
   req.user access in your middleware and routes.
@@ -67,7 +51,7 @@ export interface IUser {
 declare global {
   namespace Express {
     interface Request {
-      user?: IUser
+      user?: ContractUser
     }
   }
 }

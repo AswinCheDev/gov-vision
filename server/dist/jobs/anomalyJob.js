@@ -17,7 +17,7 @@ async function runAnomalyDetection() {
         completedAt: { $exists: true, $ne: null },
         isScored: false
     })
-        .select("_id cycleTimeHours rejectionCount revisionCount daysOverSLA department")
+        .select("_id cycleTimeHours rejectionCount revisionCount daysOverSLA departmentName")
         .lean();
     if (decisions.length === 0) {
         console.log("[AnomalyJob] No completed decisions found. Skipping.");
@@ -76,7 +76,7 @@ async function runAnomalyDetection() {
                 anomalyScore: anomaly.anomalyScore,
                 severity: anomaly.severity,
                 isAnomaly: true,
-                department: original?.department || "unknown",
+                department: original?.departmentName || "unknown",
                 featureValues,
                 description: `Anomaly detected: score ${anomaly.anomalyScore.toFixed(3)}, severity ${anomaly.severity}`
             },
@@ -84,7 +84,7 @@ async function runAnomalyDetection() {
                 isAcknowledged: false,
                 decisionId: decisionObjectId
             }
-        }, { upsert: true, new: true });
+        }, { upsert: true, returnDocument: 'after' });
     }
     await (0, cacheService_1.invalidate)("m3:anomalies:active");
     console.log("[AnomalyJob] Redis cache invalidated. Run complete.");

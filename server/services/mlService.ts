@@ -47,3 +47,26 @@ export async function callAnomalyPredict(
 
 	return responses
 }
+
+export async function retrainModels(): Promise<void> {
+	const baseUrl = process.env.ML_SERVICE_URL
+	const serviceKey = process.env.SERVICE_KEY
+
+	if (!baseUrl) {
+		throw new Error("ML_SERVICE_URL is not configured")
+	}
+
+	if (!serviceKey) {
+		throw new Error("SERVICE_KEY is not configured")
+	}
+
+	await axios.post(
+		`${baseUrl}/ml/models/train`,
+		{},
+		{
+			headers: {
+				"x-service-key": serviceKey
+			}
+		}
+	)
+}

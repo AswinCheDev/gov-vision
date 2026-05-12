@@ -203,6 +203,12 @@ def _fit_and_save_model(dept_id: str, target: str, daily: pd.DataFrame, prefix: 
 		print(f"  Skipping {dept_id} ({target}): no valid target values")
 		return False
 
+
+	# --- Train/Test Split (last 20% for test) ---
+	split_idx = int(len(daily) * 0.8)
+	train_df = daily.iloc[:split_idx].copy()
+	test_df = daily.iloc[split_idx:].copy()
+
 	model = Prophet(
 		yearly_seasonality=True,
 		weekly_seasonality=True,
@@ -210,24 +216,44 @@ def _fit_and_save_model(dept_id: str, target: str, daily: pd.DataFrame, prefix: 
 		interval_width=0.95,
 		changepoint_prior_scale=0.05,
 	)
-	model.fit(daily)
+	model.fit(train_df)
 
-	# --- VISUAL DIAGNOSTICS (Org-level Volume only) ---
-	if dept_id == "org" and target == "volume":
-		print(f"\nGenerating visual diagnostics for Org-level Volume...")
+	# --- Accuracy Metrics ---
+	print(f"\n[Model: {prefix} | Department: {dept_id} | Target: {target}]")
+	if not test_df.empty:
+		future = test_df[["ds"]].copy()
+		forecast = model.predict(future)
+		y_true = test_df["y"].values
+		y_pred = forecast["yhat"].values
+		mae = float(pd.Series(y_true - y_pred).abs().mean())
+		rmse = float(((pd.Series(y_true - y_pred) ** 2).mean()) ** 0.5)
+		mape = float((pd.Series((y_true - y_pred) / (y_true + 1e-8)).abs().mean()) * 100)
+		print(f"  Test set size: {len(test_df)}")
+		print(f"  MAE : {mae:.2f}")
+		print(f"  RMSE: {rmse:.2f}")
+		print(f"  MAPE: {mape:.2f}%\n")
+	else:
+		print("  Not enough data for test set accuracy metrics.\n")
+
+	# --- VISUAL DIAGNOSTICS (Org-level Volume and Delay) ---
+	if dept_id == "org" and target in ("volume", "delay"):
+		print(f"\nGenerating visual diagnostics for Org-level {target.title()}...")
 		future = model.make_future_dataframe(periods=90)
 		forecast = model.predict(future)
-		
 		# Chart 1: Main Forecast
 		fig1 = model.plot(forecast)
-		plt.title("Chart 1: Org-Level Volume Forecast (90-Day Outlook)")
-		plt.xlabel("Date")
-		plt.ylabel("Decision Volume")
+		if target == "delay":
+			plt.title("Chart 1: Org-Level Delay Forecast (90-Day Outlook)")
+			plt.xlabel("Date")
+			plt.ylabel("Delay (Hours)")
+		else:
+			plt.title("Chart 1: Org-Level Volume Forecast (90-Day Outlook)")
+			plt.xlabel("Date")
+			plt.ylabel("Decision Volume")
 		plt.show()
-		
 		# Chart 2: Components (Seasonality)
 		fig2 = model.plot_components(forecast)
-		fig2.suptitle("Chart 2: Forecast Components (Trends & Seasonality)", y=1.02)
+		fig2.suptitle(f"Chart 2: Forecast Components (Trends & Seasonality) [{target.title()}]", y=1.02)
 		plt.show()
 
 	safe_dept_id = dept_id.replace("/", "_").replace(" ", "_")

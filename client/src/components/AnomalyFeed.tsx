@@ -22,8 +22,7 @@ function getAuthHeaders(): Record<string, string> {
     return { Authorization: `Bearer ${token}` }
   }
 
-  const testRole = localStorage.getItem("x_test_role") || "analyst"
-  return { "x-test-role": testRole }
+  return {}
 }
 
 function normalizeAnomalies(payload: any): IFeedAnomaly[] {

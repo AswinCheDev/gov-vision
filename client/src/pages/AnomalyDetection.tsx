@@ -350,7 +350,7 @@ export default function DeepInsights() {
       style={{
         minHeight: "100vh",
         background: "#F5F7FA",
-        fontFamily: "'DM Sans', 'Outfit', system-ui, sans-serif"
+        fontFamily: "var(--font-sans)"
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>

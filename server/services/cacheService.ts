@@ -51,15 +51,15 @@ export async function getOrSet<T>(
   }
 
   if (cached) {
-
     // Cache HIT — parse and return immediately
+    console.log(`[Cache HIT] key=${key}`)
     return JSON.parse(cached) as T
-
   }
 
   /*
     Cache MISS — call the actual data function
   */
+  console.log(`[Cache MISS] key=${key} — fetching from DB`)
   const freshData = await fetchFn()
 
   /*
@@ -114,13 +114,12 @@ export async function invalidate(pattern: string): Promise<void> {
   }
 
   if (keys.length > 0) {
-
+    console.log(`[Cache INVALIDATED] pattern=${pattern} — deleted ${keys.length} key(s)`)
     try {
       await redis.del(...keys)
     } catch {
       // Ignore cache delete failures in optional-cache mode.
     }
-
   }
 
 }

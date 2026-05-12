@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { getKpiSummary } from "../services/api"
+import { decodeToken, clearToken } from "../utils/auth"
 
 interface TopBarProps {
   anomalyCount?: number
@@ -7,10 +9,17 @@ interface TopBarProps {
 }
 
 export default function TopBar({ anomalyCount = 0, openViolations = 0 }: TopBarProps) {
+  const navigate = useNavigate()
   const alertCount = anomalyCount + openViolations
   const [isLive, setIsLive] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const currentUser = decodeToken()
+
+  const handleLogout = () => {
+    clearToken()
+    navigate('/login')
+  }
 
   const formatTime = (value: Date): string => {
     return new Intl.DateTimeFormat("en-US", {
@@ -162,50 +171,89 @@ export default function TopBar({ anomalyCount = 0, openViolations = 0 }: TopBarP
         {/* Divider */}
         <div style={{ width: "1px", height: "24px", background: "#E2E8F4", margin: "0 4px" }} />
 
-        {/* Role Switcher Dropdown */}
-        <div style={{ position: "relative" }} className="role-switcher">
-          <select
-            value={localStorage.getItem("x_test_role") || "analyst"}
-            onChange={(e) => {
-              localStorage.setItem("x_test_role", e.target.value)
-              window.location.reload()
-            }}
-            style={{
-              height: "36px",
-              padding: "0 12px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #3A3F48, #2A2F36)",
-              color: "white",
+        {/* User info section */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {/* User name and role */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "2px"
+          }}>
+            <span style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "#1E293B",
+              fontFamily: "'Outfit', sans-serif"
+            }}>
+              {currentUser?.userId || "User"}
+            </span>
+            <span style={{
               fontSize: "11px",
-              fontWeight: 800,
-              cursor: "pointer",
+              fontWeight: 600,
+              color: "#94A3B8",
               fontFamily: "'Outfit', sans-serif",
-              border: "1px solid rgba(255,255,255,0.1)",
-              appearance: "none",
-              outline: "none",
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              boxShadow: "0 2px 8px rgba(15,23,42,0.22)",
-              textAlign: "center",
-              minWidth: "100px"
+              letterSpacing: "0.5px"
+            }}>
+              {currentUser?.role || "guest"}
+            </span>
+          </div>
+
+          {/* Role badge */}
+          <div style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "10px",
+            background: "linear-gradient(135deg, #3A3F48, #2A2F36)",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: 800,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "'Outfit', sans-serif",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 2px 8px rgba(15,23,42,0.22)"
+          }}>
+            {(currentUser?.userId || "U")[0].toUpperCase()}
+          </div>
+
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "10px",
+              border: "1px solid #E2E8F4",
+              background: "white",
+              color: "#374151",
+              fontSize: "12px",
+              fontWeight: 600,
+              fontFamily: "'Outfit', sans-serif",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s",
+              height: "36px"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#F1F5F9"
+              e.currentTarget.style.borderColor = "#CBD5E1"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "white"
+              e.currentTarget.style.borderColor = "#E2E8F4"
             }}
           >
-            <option value="admin" style={{ color: "#1F2937", background: "white" }}>ADMIN</option>
-            <option value="manager" style={{ color: "#1F2937", background: "white" }}>MANAGER</option>
-            <option value="executive" style={{ color: "#1F2937", background: "white" }}>EXECUTIVE</option>
-            <option value="analyst" style={{ color: "#1F2937", background: "white" }}>ANALYST</option>
-          </select>
-          <div style={{
-            position: "absolute",
-            right: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            pointerEvents: "none",
-            color: "rgba(255,255,255,0.5)",
-            fontSize: "10px"
-          }}>
-            ▼
-          </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} width="14" height="14">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Logout
+          </button>
         </div>
       </div>
     </header>

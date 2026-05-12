@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { NavLink, useLocation } from "react-router-dom"
+import { decodeToken } from "../utils/auth"
 
 const dashboardItem = {
   label: "Dashboard",
@@ -27,6 +28,66 @@ const reportsItem = {
     </svg>
   )
 }
+
+const analyticsItems = [
+  {
+    label: "Decision Analytics",
+    path: "/analytics/decisions",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path d="M4 19h16" />
+        <path d="M7 16V8" />
+        <path d="M12 16V4" />
+        <path d="M17 16v-6" />
+      </svg>
+    )
+  },
+  {
+    label: "Compliance Analytics",
+    path: "/analytics/compliance",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    )
+  },
+  {
+    label: "Department Performance",
+    path: "/analytics/departments",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path d="M3 17h18" />
+        <path d="M6 13v4" />
+        <path d="M12 9v8" />
+        <path d="M18 5v12" />
+      </svg>
+    )
+  }
+]
+
+const adminItems = [
+  {
+    label: "KPI Config",
+    path: "/admin/kpi-config",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path d="M12 15v2" />
+        <path d="M12 7a4 4 0 100 8 4 4 0 000-8z" />
+        <path d="M19.4 15a7.9 7.9 0 00.1-1 7.9 7.9 0 00-.1-1l2-1.6-2-3.4-2.4.8a7.5 7.5 0 00-1.7-1L15 5h-6l-.3 2.8a7.5 7.5 0 00-1.7 1l-2.4-.8-2 3.4L4.6 13a7.9 7.9 0 000 2l-2 1.6 2 3.4 2.4-.8a7.5 7.5 0 001.7 1L9 23h6l.3-2.8a7.5 7.5 0 001.7-1l2.4.8 2-3.4-2-1.6z" />
+      </svg>
+    )
+  },
+  {
+    label: "AI/ML Insights",
+    path: "/ai/insights",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        <path d="M4 19h16" />
+        <path d="M6 15l3-4 3 2 4-6 2 3" />
+      </svg>
+    )
+  }
+]
 
 const aiFeatureItems = [
   {
@@ -94,8 +155,9 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const location = useLocation()
   const [isNewReportHovered, setIsNewReportHovered] = useState(false)
   const [isNewReportFocused, setIsNewReportFocused] = useState(false)
+  const currentRole = decodeToken()?.role ?? "guest"
 
-  const allNavItems = [dashboardItem, ...aiFeatureItems, reportsItem, ...bottomItems]
+  const allNavItems = [dashboardItem, ...analyticsItems, ...aiFeatureItems, reportsItem, ...adminItems, ...bottomItems]
   const activeNavLabel = allNavItems.find(item => location.pathname.startsWith(item.path))?.label ?? ""
 
   return (
@@ -264,6 +326,53 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
                 borderBottom: "1px solid rgba(255,255,255,0.07)",
                 marginBottom: "6px"
               }}>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Analytics</span>
+              </div>
+            )}
+            {collapsed && <div style={{ width: "30px", height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px auto" }} />}
+
+            {analyticsItems.map(item => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                title={item.label}
+                style={({ isActive }) => ({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: collapsed ? "0" : "10px",
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  padding: "10px 12px",
+                  borderRadius: "10px",
+                  marginBottom: "2px",
+                  textDecoration: "none",
+                  color: isActive ? "white" : "rgba(255,255,255,0.5)",
+                  background: isActive ? "var(--accent-grad-soft)" : "transparent",
+                  borderLeft: isActive ? "3px solid var(--accent-edge)" : "3px solid transparent",
+                  transition: "all 0.18s ease",
+                  fontSize: "12.8px",
+                  fontWeight: isActive ? 600 : 400,
+                  fontFamily: "'Outfit', sans-serif"
+                })}
+              >
+                {item.icon}
+                {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>}
+              </NavLink>
+            ))}
+          </div>
+
+          <div style={{ marginTop: "12px", marginBottom: "4px" }}>
+            {!collapsed && (
+              <div style={{
+                padding: "8px 12px 10px",
+                color: "rgba(255,255,255,0.6)",
+                fontSize: "11px",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                fontFamily: "'Outfit', sans-serif",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                marginBottom: "6px"
+              }}>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Deep Insights</span>
               </div>
             )}
@@ -337,6 +446,54 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reportsItem.label}</span>}
             </NavLink>
           </div>
+
+          {currentRole === "admin" && (
+            <div style={{ marginTop: "12px" }}>
+              {!collapsed && (
+                <div style={{
+                  padding: "8px 12px 10px",
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  fontFamily: "'Outfit', sans-serif",
+                  borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  marginBottom: "6px"
+                }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Admin</span>
+                </div>
+              )}
+              {collapsed && <div style={{ width: "30px", height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px auto" }} />}
+
+              {adminItems.map(item => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  title={item.label}
+                  style={({ isActive }) => ({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: collapsed ? "0" : "10px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    padding: "9px 12px",
+                    borderRadius: "10px",
+                    marginBottom: "2px",
+                    textDecoration: "none",
+                    color: isActive ? "white" : "rgba(255,255,255,0.4)",
+                    background: isActive ? "var(--accent-grad-soft)" : "transparent",
+                    borderLeft: isActive ? "3px solid var(--accent-edge)" : "3px solid transparent",
+                    fontSize: "12.4px",
+                    fontFamily: "'Outfit', sans-serif",
+                    transition: "all 0.18s ease"
+                  })}
+                >
+                  {item.icon}
+                  {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</span>}
+                </NavLink>
+              ))}
+            </div>
+          )}
         </div>
       </nav>
 

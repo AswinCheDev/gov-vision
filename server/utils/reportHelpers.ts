@@ -90,9 +90,16 @@ export async function assembleReportData(config: {
     }
   })
 
+
   const anomalyFilter: Record<string, unknown> = {}
   if (config.departments.length > 0) {
     anomalyFilter.department = { $in: config.departments }
+  }
+  // Add date filtering for anomalies (createdAt within range)
+  if (config.dateFrom || config.dateTo) {
+    anomalyFilter.createdAt = {}
+    if (config.dateFrom) anomalyFilter.createdAt.$gte = new Date(config.dateFrom)
+    if (config.dateTo) anomalyFilter.createdAt.$lte = new Date(config.dateTo)
   }
 
   const anomalies = await Anomaly.find(anomalyFilter)

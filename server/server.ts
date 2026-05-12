@@ -11,15 +11,29 @@ import { connectRedis } from "./config/redis"
 import "./jobs/anomalyJob"
 import "./jobs/forecastJob"
 import "./jobs/riskScoringJob"
+import "./jobs/retrainJob"
 import "./jobs/reportScheduleJob"
 
 import analyticsRoutes from "./routes/analyticsRoutes"
 import eventRoutes     from "./routes/eventRoutes"
 import aiRoutes        from "./routes/aiRoutes"
 import reportRoutes    from "./routes/reportRoutes"
+import reportTemplateRoutes from "./routes/reportTemplateRoutes"
+import authRoutes      from "./routes/authRoutes"
+import kpiConfigRoutes from "./routes/kpiConfigRoutes"
+import { apiLimiter, authLimiter } from "./middleware/rateLimiter"
 
 const app  = express()
 const PORT = process.env.PORT || 5002
+
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET is required to start the server")
+}
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map(origin => origin.trim())
+  .filter(Boolean)
 
 /*
   Security and utility middleware.
@@ -33,18 +47,9 @@ app.use(cors({
       return
     }
 
-    try {
-      const url = new URL(origin)
-      const isLocalhost =
-        url.hostname === "localhost" ||
-        url.hostname === "127.0.0.1"
-
-      if (isLocalhost) {
-        callback(null, true)
-        return
-      }
-    } catch {
-      // Ignore malformed origins and fall through to rejection.
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+      return
     }
 
     callback(new Error("Not allowed by CORS"))
@@ -52,6 +57,10 @@ app.use(cors({
 }))
 app.use(morgan("dev"))
 app.use(express.json())
+
+// Production should terminate TLS at the reverse proxy layer (nginx/caddy), not in Node.
+app.use("/api", apiLimiter)
+app.use("/api/auth", authLimiter)
 
 /*
   Mount routes.
@@ -61,9 +70,12 @@ app.use(express.json())
   the route files themselves.
 */
 app.use("/api/analytics", analyticsRoutes)
+app.use("/api/auth",     authRoutes)
+app.use("/api/admin",    kpiConfigRoutes)
 app.use("/api/events",    eventRoutes)
 app.use("/api/ai",        aiRoutes)
 app.use("/api/reports",   reportRoutes)
+app.use("/api/reports",   reportTemplateRoutes)
 
 /*
   Health check — useful to confirm the server is running

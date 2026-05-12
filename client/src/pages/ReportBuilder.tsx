@@ -1,9 +1,15 @@
-import { useState } from "react";
-import { generateReport, downloadReport } from "../services/api";
+import { useEffect, useState } from "react";
+import {
+  generateReport,
+  downloadReport,
+  getReportTemplates,
+  saveReportTemplate,
+} from "../services/api";
 import type { ReportFormat, ReportType } from "../types";
 import DateRangePicker from "../components/DateRangePicker";
 import FormatSelector from "../components/FormatSelector";
 import ReportsSubnav from "../components/ReportsSubnav";
+import AddScheduleModal from "../components/AddScheduleModal";
 
 const REPORT_TYPES: Array<{
   value: ReportType;
@@ -32,6 +38,7 @@ const REPORT_TYPES: Array<{
   },
 ];
 
+// Use department codes as in the backend/database
 const DEPARTMENTS = [
   "Finance",
   "Human Resources",
@@ -53,12 +60,34 @@ export default function ReportBuilder() {
   const [dateTo, setDateTo] = useState(today);
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]); // Empty = all depts
   const [format, setFormat] = useState<ReportFormat>("csv");
+  const [selectedWidgets, setSelectedWidgets] = useState<string[]>(["KPI Table"]);
+  const [templateName, setTemplateName] = useState("Weekly Executive Summary");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [templates, setTemplates] = useState<Array<{
+    _id: string;
+    name: string;
+    reportType: string;
+    dateFrom: string;
+    dateTo: string;
+    departments: string[];
+    widgets: string[];
+    format: string;
+  }>>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [templateMessage, setTemplateMessage] = useState<string | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // UI state
   const [loading, setLoading] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    getReportTemplates()
+      .then((data) => setTemplates(data))
+      .catch(() => setTemplates([]));
+  }, []);
 
   // Toggle a department in/out of the selected list
   function toggleDept(dept: string) {
@@ -101,12 +130,18 @@ export default function ReportBuilder() {
     setSuccess(false);
 
     try {
+      // If no departments selected (organization-wide), send both ORG and all departments
+      let departmentsToSend = selectedDepts;
+      if (selectedDepts.length === 0) {
+        departmentsToSend = ["ORG", ...DEPARTMENTS];
+      }
       const result = await generateReport({
         type: reportType,
         format,
         dateFrom,
         dateTo,
-        departments: selectedDepts,
+        departments: departmentsToSend,
+        widgets: selectedWidgets,
       });
 
       setGeneratedId(result.reportId);
@@ -128,6 +163,55 @@ export default function ReportBuilder() {
     await downloadReport(generatedId, `govvision-report-${reportType}.${ext}`);
   }
 
+  async function handleSaveTemplate() {
+    setError(null);
+    setTemplateMessage(null);
+    setSavingTemplate(true);
+    try {
+      await saveReportTemplate({
+        name: templateName.trim() || "Untitled Template",
+        reportType,
+        dateFrom,
+        dateTo,
+        departments: selectedDepts,
+        widgets: selectedWidgets,
+        format,
+      });
+      setTemplateMessage("Template saved successfully.");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to save template.");
+    } finally {
+      setSavingTemplate(false);
+    }
+  }
+
+  function applyTemplate(templateId: string) {
+    setSelectedTemplateId(templateId);
+    const template = templates.find((item) => item._id === templateId);
+    if (!template) return;
+
+    setTemplateName(template.name);
+    setReportType(template.reportType as ReportType);
+    setDateFrom(template.dateFrom);
+    setDateTo(template.dateTo);
+    setSelectedDepts(template.departments || []);
+    setSelectedWidgets(template.widgets || []);
+    setFormat(template.format as ReportFormat);
+    setGeneratedId(null);
+    setSuccess(false);
+  }
+
+  const estimatedDays = Math.max(1, Math.ceil((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / (1000 * 60 * 60 * 24)));
+  const estimatedDecisions = Math.round((5000 / DEPARTMENTS.length) * Math.max(1, selectedDepts.length || DEPARTMENTS.length) / 365 * estimatedDays);
+
+  function toggleWidget(widget: string) {
+    setSelectedWidgets((prev) =>
+      prev.includes(widget) ? prev.filter((item) => item !== widget) : [...prev, widget],
+    );
+    setGeneratedId(null);
+    setSuccess(false);
+  }
+
   return (
     <div className="p-6 max-w-6xl">
       {/* Page header */}
@@ -142,6 +226,41 @@ export default function ReportBuilder() {
       <div className="mb-8">
         <ReportsSubnav />
       </div>
+
+      <div className="mb-8 rounded-2xl border bg-white p-4 shadow-sm space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex-1 space-y-1">
+            <label className="text-xs font-medium text-gray-600">Load Template</label>
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => applyTemplate(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            >
+              <option value="">Choose a saved template...</option>
+              {templates.map((template) => (
+                <option key={template._id} value={template._id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 space-y-1">
+            <label className="text-xs font-medium text-gray-600">Template Name</label>
+            <input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              placeholder="e.g. Weekly Governance Pack"
+            />
+          </div>
+        </div>
+      </div>
+
+      {templateMessage && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {templateMessage}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Left Column */}
@@ -179,6 +298,27 @@ export default function ReportBuilder() {
                   </div>
                   <p className="text-xs text-gray-500 ml-5">{rt.description}</p>
                 </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Section: Widgets */}
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-800">Include Widgets</h2>
+            <div className="flex flex-wrap gap-2">
+              {["KPI Table", "Compliance Chart", "Anomaly List", "Risk Scores", "Decision Volume"].map((widget) => (
+                <button
+                  key={widget}
+                  type="button"
+                  onClick={() => toggleWidget(widget)}
+                  className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                    selectedWidgets.includes(widget)
+                      ? "border-gray-800 bg-gray-800 text-white"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"
+                  }`}
+                >
+                  {widget}
+                </button>
               ))}
             </div>
           </div>
@@ -252,6 +392,9 @@ export default function ReportBuilder() {
             <p className="text-xs text-gray-400">
               Leave all unselected to include all departments in the report.
             </p>
+            <p className="text-xs text-gray-500">
+              Estimated: ~{estimatedDecisions} decisions · {selectedDepts.length === 0 ? DEPARTMENTS.length : selectedDepts.length} departments · {estimatedDays} days
+            </p>
           </div>
         </div>
 
@@ -312,9 +455,39 @@ export default function ReportBuilder() {
                 "Generate Report"
               )}
             </button>
+
+            <button
+              onClick={handleSaveTemplate}
+              disabled={savingTemplate}
+              className="w-full border border-gray-200 bg-white text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-50"
+            >
+              {savingTemplate ? "Saving template..." : "Save as Template"}
+            </button>
+
+            <button
+              onClick={() => setShowScheduleModal(true)}
+              className="w-full border border-dashed border-gray-300 bg-gray-50 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-100"
+            >
+              Schedule This Report
+            </button>
           </div>
         </div>
       </div>
+
+      <AddScheduleModal
+        open={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onCreated={(schedule) => {
+          console.log("[ReportBuilder] Schedule created:", schedule._id)
+          setShowScheduleModal(false)
+        }}
+        initialValues={{
+          reportType,
+          format,
+          departments: selectedDepts,
+          dateRange: dateFrom === "2024-01-01" ? "last_90_days" : undefined,
+        }}
+      />
     </div>
   );
 }

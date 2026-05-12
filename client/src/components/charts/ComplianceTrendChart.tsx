@@ -118,7 +118,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
         lineStyle: { type: "dashed", color: "#EF4444", width: 1.5 },
         label: {
           formatter: "Target: 95%",
-          fontFamily: "Outfit",
+          fontFamily: "IBM Plex Sans",
           fontSize: 10,
           color: "#EF4444",
           position: "end"
@@ -137,7 +137,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
       borderColor: "#E2E6ED",
       borderWidth: 1,
       textStyle: {
-        fontFamily: "Outfit",
+        fontFamily: "IBM Plex Sans",
         fontSize: 12,
         color: "#1E293B"
       },
@@ -152,7 +152,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
     },
     legend: {
       bottom: 0,
-      textStyle: { fontFamily: "Outfit", fontSize: 11, color: "#64748B" },
+      textStyle: { fontFamily: "IBM Plex Sans", fontSize: 11, color: "#64748B" },
       itemWidth: 12,
       itemHeight: 8
     },
@@ -162,10 +162,10 @@ export default function ComplianceTrendChart({ filters }: Props) {
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {
-        fontFamily: "Outfit",
+        fontFamily: "IBM Plex Sans",
         fontSize: 10,
         color: "#94A3B8",
-        rotate: granularity === "monthly" ? 20 : 0
+        rotate: 0
       },
       splitLine: { show: false }
     },
@@ -175,7 +175,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
       max: 100,
       axisLabel: {
         formatter: "{value}%",
-        fontFamily: "Outfit",
+        fontFamily: "IBM Plex Sans",
         fontSize: 10,
         color: "#94A3B8"
       },

@@ -13,13 +13,14 @@ export default function ReportsSubnav() {
         <NavLink
           key={link.to}
           to={link.to}
-          className={({ isActive }) =>
-            `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`
-          }
+          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200"
+          style={({ isActive }) => ({
+            fontFamily: "var(--font-sans)",
+            textDecoration: "none",
+            border: isActive ? "1px solid var(--accent-edge)" : "1px solid #E5E7EB",
+            background: isActive ? "var(--accent-grad)" : undefined,
+            color: isActive ? "#FFFFFF" : undefined
+          })}
         >
           {link.label}
         </NavLink>

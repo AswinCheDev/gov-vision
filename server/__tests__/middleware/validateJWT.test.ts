@@ -59,4 +59,15 @@ describe('validateJWT Middleware', () => {
     expect(mockReq.user).toBeDefined()
     expect(mockReq.user!.userId).toBe('user-123')
   })
+
+  it('should reject expired token', () => {
+    const payload = { userId: 'user-123', role: 'admin', department: 'OP001' }
+    const expiredToken = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '-1h' })
+    mockReq.headers = { authorization: `Bearer ${expiredToken}` }
+    
+    validateJWT(mockReq as Request, mockRes as Response, mockNext)
+    
+    expect(mockRes.status).toHaveBeenCalledWith(401)
+    expect(mockNext).not.toHaveBeenCalled()
+  })
 })

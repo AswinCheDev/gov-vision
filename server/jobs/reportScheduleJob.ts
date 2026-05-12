@@ -2,6 +2,7 @@ import cron from "node-cron"
 import ReportSchedule from "../models/ReportSchedule"
 import Report from "../models/Report"
 import { generateReport, ReportFormat, ReportType } from "../services/reportGenerator"
+import { sendReportEmail } from "../services/emailService"
 
 function calculateDateRange(mode: string): { dateFrom: string; dateTo: string } {
   const today = new Date()
@@ -54,7 +55,7 @@ export async function runScheduleCheck(): Promise<void> {
         requestedBy: `schedule:${String(schedule._id)}`,
       })
 
-      await Report.create({
+      const reportRecord = await Report.create({
         type: schedule.reportConfig?.type,
         format: schedule.reportConfig?.format,
         status: "completed",
@@ -70,6 +71,18 @@ export async function runScheduleCheck(): Promise<void> {
         generatedBy: `schedule:${schedule.name}`,
         generatedAt: new Date(),
       })
+
+      try {
+        const downloadUrl = `${process.env.APP_BASE_URL}/api/reports/download/${reportRecord._id}`
+        await sendReportEmail(
+          Array.isArray(schedule.recipients) ? schedule.recipients : [],
+          schedule.name,
+          downloadUrl
+        )
+        console.log(`[ScheduleJob] Email sent for schedule "${schedule.name}".`)
+      } catch (emailError) {
+        console.error(`[ScheduleJob] Email delivery failed for "${schedule.name}":`, emailError)
+      }
 
       await ReportSchedule.findByIdAndUpdate(schedule._id, {
         lastRunAt: now,

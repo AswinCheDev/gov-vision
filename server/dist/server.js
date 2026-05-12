@@ -14,13 +14,24 @@ const redis_1 = require("./config/redis");
 require("./jobs/anomalyJob");
 require("./jobs/forecastJob");
 require("./jobs/riskScoringJob");
+require("./jobs/retrainJob");
 require("./jobs/reportScheduleJob");
 const analyticsRoutes_1 = __importDefault(require("./routes/analyticsRoutes"));
 const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
 const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
 const reportRoutes_1 = __importDefault(require("./routes/reportRoutes"));
+const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
+const kpiConfigRoutes_1 = __importDefault(require("./routes/kpiConfigRoutes"));
+const rateLimiter_1 = require("./middleware/rateLimiter");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5002;
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is required to start the server");
+}
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
 /*
   Security and utility middleware.
   These must come BEFORE your routes.
@@ -32,23 +43,18 @@ app.use((0, cors_1.default)({
             callback(null, true);
             return;
         }
-        try {
-            const url = new URL(origin);
-            const isLocalhost = url.hostname === "localhost" ||
-                url.hostname === "127.0.0.1";
-            if (isLocalhost) {
-                callback(null, true);
-                return;
-            }
-        }
-        catch {
-            // Ignore malformed origins and fall through to rejection.
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+            return;
         }
         callback(new Error("Not allowed by CORS"));
     }
 }));
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
+// Production should terminate TLS at the reverse proxy layer (nginx/caddy), not in Node.
+app.use("/api", rateLimiter_1.apiLimiter);
+app.use("/api/auth", rateLimiter_1.authLimiter);
 /*
   Mount routes.
   Analytics and AI routes are protected by JWT inside
@@ -57,6 +63,8 @@ app.use(express_1.default.json());
   the route files themselves.
 */
 app.use("/api/analytics", analyticsRoutes_1.default);
+app.use("/api/auth", authRoutes_1.default);
+app.use("/api/admin", kpiConfigRoutes_1.default);
 app.use("/api/events", eventRoutes_1.default);
 app.use("/api/ai", aiRoutes_1.default);
 app.use("/api/reports", reportRoutes_1.default);

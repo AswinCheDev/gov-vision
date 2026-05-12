@@ -117,7 +117,7 @@ export async function runAnomalyDetection(): Promise<void> {
 					decisionId: decisionObjectId
 				}
 			},
-			{ upsert: true, new: true }
+			{ upsert: true, returnDocument: 'after' }
 		)
 	}
 

@@ -55,6 +55,10 @@ const kpiSnapshotSchema = new mongoose_1.Schema({
         type: String,
         default: null
     },
+    departmentName: {
+        type: String,
+        default: "Organization Wide"
+    },
     snapshotDate: {
         type: Date,
         required: true

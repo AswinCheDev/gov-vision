@@ -44,6 +44,81 @@ router.post(
 	}
 )
 
+router.post(
+	"/schedules/:id/run",
+	validateJWT,
+	requireRole(["admin", "manager"]),
+	async (req: Request, res: Response) => {
+		try {
+			const schedule = await ReportSchedule.findById(req.params.id)
+			if (!schedule) {
+				return res.status(404).json({ error: "Schedule not found" })
+			}
+
+			const today = new Date()
+			const days = schedule.reportConfig?.dateRangeMode === "last_7_days"
+				? 7
+				: schedule.reportConfig?.dateRangeMode === "last_30_days"
+					? 30
+					: 90
+			const from = new Date(today.getTime() - days * 24 * 60 * 60 * 1000)
+
+			const filePath = await generateReport({
+				type: schedule.reportConfig?.type as ReportConfig["type"],
+				format: schedule.reportConfig?.format as ReportConfig["format"],
+				dateFrom: from.toISOString().split("T")[0],
+				dateTo: today.toISOString().split("T")[0],
+				departments: schedule.reportConfig?.departments || [],
+				requestedBy: req.user?.userId || "unknown"
+			})
+
+			const report = await Report.create({
+				type: schedule.reportConfig?.type,
+				format: schedule.reportConfig?.format,
+				status: "completed",
+				filePath,
+				scheduleId: String(schedule._id),
+				parameters: {
+					type: schedule.reportConfig?.type,
+					format: schedule.reportConfig?.format,
+					dateFrom: from.toISOString().split("T")[0],
+					dateTo: today.toISOString().split("T")[0],
+					departments: schedule.reportConfig?.departments || [],
+					requestedBy: req.user?.userId || "unknown"
+				},
+				generatedBy: req.user?.userId || "unknown",
+				generatedAt: new Date()
+			})
+
+			return res.json({ reportId: report._id })
+		} catch (err: any) {
+			return res.status(500).json({ error: err.message })
+		}
+	}
+)
+
+router.get(
+	"/schedules/:id/history",
+	validateJWT,
+	async (req: Request, res: Response) => {
+		try {
+			const runs = await Report.find({ scheduleId: req.params.id })
+				.sort({ createdAt: -1 })
+				.limit(10)
+				.lean()
+
+			return res.json(runs.map((run) => ({
+				runDate: run.generatedAt,
+				status: run.status,
+				reportId: String(run._id),
+				filePath: run.filePath
+			})))
+		} catch (err: any) {
+			return res.status(500).json({ error: err.message })
+		}
+	}
+)
+
 router.get(
 	"/",
 	validateJWT,

@@ -4,6 +4,7 @@ import { requireRole } from '../middleware/requireRole';
 import { getOrSet } from '../services/cacheService';
 import { aggregateKPI, aggregateOrgKPI } from '../services/kpiAggregator';
 import m1Decision from '../models/m1Decisions';
+import m2Violation from '../models/m2Violations';
 import KPISnapshot from '../models/KPI_Snapshot';
 import Forecast from '../models/Forecast';
 
@@ -25,8 +26,8 @@ const router = Router();
 
 router.get(
   '/kpi-summary',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const today = new Date().toISOString().split('T')[0];
     const cacheKey = `m3:kpi:org:${today}`;
@@ -54,8 +55,8 @@ router.get(
 
 router.get(
   '/kpi-summary/:deptId',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const today = new Date().toISOString().split('T')[0];
     const { deptId } = req.params as { deptId: string };
@@ -83,8 +84,8 @@ router.get(
 
 router.get(
   '/decision-volume',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const { granularity = 'daily', dateFrom, dateTo, deptId } = req.query as {
       granularity?: string;
@@ -142,8 +143,8 @@ router.get(
 
 router.get(
   '/cycle-time-histogram',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const { deptId } = req.query as { deptId?: string };
     const cacheKey = `m3:cycletime:${deptId || 'all'}`;
@@ -184,13 +185,102 @@ router.get(
 );
 
 // ─────────────────────────────────────────────
+// GET /api/analytics/rejection-reasons
+// ─────────────────────────────────────────────
+
+router.get(
+  '/rejection-reasons',
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
+  async (req: Request, res: Response) => {
+    const { dateFrom, dateTo } = req.query as { dateFrom?: string; dateTo?: string };
+    const cacheKey = `m3:rejections:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
+
+    try {
+      const data = await getOrSet(cacheKey, 300, async () => {
+        const match: any = { source: 'ai_workflow', status: 'rejected' };
+        if (dateFrom) match.createdAt = { $gte: new Date(dateFrom) };
+        if (dateTo) match.createdAt = { ...match.createdAt, $lte: new Date(dateTo) };
+
+        const results = await m1Decision.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: { $ifNull: ['$rejectionReason', '$departmentName'] },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { count: -1 } },
+          { $project: { _id: 0, name: '$_id', value: '$count' } }
+        ]).exec();
+
+        return results.length > 0 ? results : [{ name: 'Department Review', value: 0 }];
+      });
+
+      return res.json(data);
+    } catch (err: any) {
+      console.error('[GET /api/analytics/rejection-reasons]', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
+// GET /api/analytics/top-violated-policies
+// ─────────────────────────────────────────────
+
+router.get(
+  '/top-violated-policies',
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
+  async (req: Request, res: Response) => {
+    const cacheKey = 'm3:top-violated-policies';
+
+    try {
+      const data = await getOrSet(cacheKey, 300, async () => {
+        const results = await m2Violation.aggregate([
+          {
+            $group: {
+              _id: {
+                policyId: { $ifNull: ['$policyId', { $ifNull: ['$policyName', '$severity'] }] },
+                policyName: { $ifNull: ['$policyName', { $ifNull: ['$policyId', '$severity'] }] }
+              },
+              violationCount: { $sum: 1 },
+              departments: { $addToSet: '$department' }
+            }
+          },
+          { $sort: { violationCount: -1 } },
+          { $limit: 10 },
+          {
+            $project: {
+              _id: 0,
+              policyId: '$_id.policyId',
+              policyName: '$_id.policyName',
+              violationCount: 1,
+              departments: 1
+            }
+          }
+        ]).exec();
+
+        return results;
+      });
+
+      return res.json(data);
+    } catch (err: any) {
+      console.error('[GET /api/analytics/top-violated-policies]', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
 // GET /api/analytics/compliance-trend
 // ─────────────────────────────────────────────
 
 router.get(
   '/compliance-trend',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const { deptIds, dateFrom, dateTo } = req.query as {
       deptIds?: string;
@@ -245,8 +335,8 @@ router.get(
 
 router.get(
   '/risk-heatmap',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const { dateFrom, dateTo } = req.query as { dateFrom?: string; dateTo?: string };
     const cacheKey = `m3:riskheatmap:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
@@ -311,8 +401,8 @@ router.get(
 
 router.get(
   '/forecast',
-  // validateJWT, // TEMP: commented for development testing
-  // requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
+  validateJWT,
+  requireRole(['admin', 'manager', 'analyst']),
   async (req: Request, res: Response) => {
     const { deptId = 'org', horizon = '30', target = 'volume' } = req.query as {
       deptId?: string;

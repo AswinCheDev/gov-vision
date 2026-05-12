@@ -11,6 +11,14 @@ const m2Violations_1 = __importDefault(require("../models/m2Violations"));
 const KPI_Snapshot_1 = __importDefault(require("../models/KPI_Snapshot"));
 const Anomaly_1 = __importDefault(require("../models/Anomaly"));
 const DEPARTMENTS = ["FI001", "HR002", "OP003", "IT004", "CS005"];
+const DEPT_NAME_MAP = {
+    FI001: "Finance",
+    HR002: "Human Resources",
+    OP003: "Operations",
+    IT004: "Information Technology",
+    CS005: "Customer Service",
+    ORG: "Organization Wide"
+};
 const COMPLIANCE_SLA_GRACE_DAYS = 0;
 function dayStart(date) {
     const d = new Date(date);
@@ -65,11 +73,7 @@ async function calculateKPIs(startDate, endDate, departmentId) {
     const rejectedCount = decisions.filter(d => d.status === "rejected").length;
     const completed = decisions.filter(d => d.completedAt);
     const compliantDecisionCount = decisions.filter(d => d.status === "approved" && Number(d.daysOverSLA ?? 0) <= COMPLIANCE_SLA_GRACE_DAYS).length;
-    const avgCycleTimeHours = completed.reduce((sum, d) => {
-        const diff = (new Date(d.completedAt).getTime() -
-            new Date(d.createdAt).getTime()) / (1000 * 60 * 60);
-        return sum + diff;
-    }, 0) / (completed.length || 1);
+    const avgCycleTimeHours = completed.reduce((sum, d) => sum + (Number(d.cycleTimeHours) || 0), 0) / (completed.length || 1);
     const violationFilter = {
         createdAt: { $gte: startDate, $lte: endDate },
         source: 'ai_workflow' // Only include live data violations
@@ -121,6 +125,7 @@ async function saveSnapshot(scopeId, kpis) {
         $set: {
             ...kpis,
             departmentId: scopeId,
+            departmentName: DEPT_NAME_MAP[scopeId] || scopeId,
             snapshotDate: today
         }
     }, {

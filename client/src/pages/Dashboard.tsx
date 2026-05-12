@@ -418,7 +418,7 @@ export default function Dashboard() {
                 accentColor="#3E78F0" 
                 bgGradient="linear-gradient(140deg,#6A95FF,#4179E5)" 
                 tone="soft" 
-                size="md" 
+                size="md"
               />
             </div>
             <KPICard key={`kpi-anomaly-${refreshTick}`} title="Anomaly Count" value={kpi?.anomalyCount??0} icon={Icons.anomaly} accentColor="#DF9A4B" bgGradient="linear-gradient(140deg,#FF9142,#F07021)" invertTrend tone="soft" size="md" />

@@ -28,7 +28,7 @@ const apiPort = import.meta.env.VITE_API_PORT || "5002"
 const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL || `${apiProtocol}//${apiHost}:${apiPort}`
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: apiBaseUrl
 })
 
@@ -54,13 +54,24 @@ api.interceptors.request.use(config => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-  } else if (import.meta.env.DEV) {
-    const testRole = localStorage.getItem("x_test_role") || "analyst"
-    config.headers["x-test-role"] = testRole
   }
 
   return config
 })
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("token")
+      localStorage.removeItem("govvision_token")
+      localStorage.removeItem("jwt")
+      window.location.assign("/login")
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 // KPI
 
@@ -161,6 +172,35 @@ export const getForecast = async (
   return unwrap<IForecastData>(res.data)
 }
 
+export async function getRejectionReasons(filters?: Partial<Pick<IFilter, "dateFrom" | "dateTo">>) {
+  const params: Record<string, string> = {}
+  if (filters?.dateFrom) params.dateFrom = filters.dateFrom
+  if (filters?.dateTo) params.dateTo = filters.dateTo
+
+  const res = await api.get("/api/analytics/rejection-reasons", { params })
+  return unwrap<Array<{ name: string; value: number }>>(res.data)
+}
+
+export async function getTopViolatedPolicies() {
+  const res = await api.get("/api/analytics/top-violated-policies")
+  return unwrap<Array<{ policyId: string; policyName: string; violationCount: number; departments: string[] }>>(res.data)
+}
+
+export async function getKpiConfig() {
+  const res = await api.get("/api/admin/kpi-config")
+  return unwrap<Array<{ kpiName: string; targetValue: number; warningThresholdPct: number; criticalThresholdPct: number; defaultTargetValue: number }>>(res.data)
+}
+
+export async function saveKpiConfig(configs: Array<{ kpiName: string; targetValue: number; warningThresholdPct: number; criticalThresholdPct: number }>) {
+  const res = await api.put("/api/admin/kpi-config", configs)
+  return unwrap(res.data)
+}
+
+export async function resetKpiConfig() {
+  const res = await api.post("/api/admin/kpi-config/reset")
+  return unwrap<Array<{ kpiName: string; targetValue: number; warningThresholdPct: number; criticalThresholdPct: number; defaultTargetValue: number }>>(res.data)
+}
+
 // Anomalies
 
 export const getAnomalies = async (): Promise<IAnomaly[]> => {
@@ -244,6 +284,34 @@ export async function getReports(): Promise<ReportRecord[]> {
   return Array.isArray(data) ? data : []
 }
 
+export async function getReportTemplates(): Promise<Array<{
+  _id: string
+  name: string
+  reportType: string
+  dateFrom: string
+  dateTo: string
+  departments: string[]
+  widgets: string[]
+  format: string
+}>> {
+  const res = await api.get("/api/reports/templates")
+  const data = unwrap<any[]>(res.data)
+  return Array.isArray(data) ? data : []
+}
+
+export async function saveReportTemplate(template: {
+  name: string
+  reportType: string
+  dateFrom: string
+  dateTo: string
+  departments: string[]
+  widgets: string[]
+  format: string
+}) {
+  const res = await api.post("/api/reports/templates", template)
+  return unwrap(res.data)
+}
+
 export async function downloadReport(reportId: string, filename: string): Promise<void> {
   const res = await api.get(`/api/reports/${reportId}/download`, {
     responseType: "blob",
@@ -277,4 +345,15 @@ export async function toggleSchedule(id: string): Promise<ReportSchedule> {
 
 export async function deleteSchedule(id: string): Promise<void> {
   await api.delete(`/api/reports/schedules/${id}`)
+}
+
+export async function runScheduleNow(id: string): Promise<{ reportId: string }> {
+  const res = await api.post(`/api/reports/schedules/${id}/run`)
+  return unwrap<{ reportId: string }>(res.data)
+}
+
+export async function getScheduleHistory(id: string): Promise<Array<{ runDate: string; status: string; reportId: string; filePath?: string }>> {
+  const res = await api.get(`/api/reports/schedules/${id}/history`)
+  const data = unwrap<any[]>(res.data)
+  return Array.isArray(data) ? data : []
 }

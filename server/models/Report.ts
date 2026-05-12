@@ -5,6 +5,7 @@ export interface IReport extends Document {
   format: "csv" | "excel" | "pdf";
   status: "completed" | "pending" | "failed";
   filePath: string;
+  scheduleId?: string;
   parameters: {
     type: "executive_summary" | "compliance" | "anomaly" | "risk";
     format: "csv" | "excel" | "pdf";
@@ -31,6 +32,7 @@ const ReportSchema: Schema = new Schema({
     required: true
   },
   filePath: { type: String, required: true },
+  scheduleId: { type: String },
   parameters: { type: Schema.Types.Mixed, required: true },
   generatedAt: { type: Date, required: true, default: Date.now },
   generatedBy: { type: String, required: true }

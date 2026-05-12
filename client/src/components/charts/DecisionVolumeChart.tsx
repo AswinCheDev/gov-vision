@@ -170,11 +170,11 @@ export default function DecisionVolumeChart({ filters }: Props) {
               <XAxis
                 dataKey="date"
                 tickFormatter={d => d.slice(5)}
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "Outfit" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "Outfit" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
                 axisLine={false} tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
@@ -193,11 +193,11 @@ export default function DecisionVolumeChart({ filters }: Props) {
               <XAxis
                 dataKey="date"
                 tickFormatter={d => d.slice(5)}
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "Outfit" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
                 axisLine={false} tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "Outfit" }}
+                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "IBM Plex Sans" }}
                 axisLine={false} tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />

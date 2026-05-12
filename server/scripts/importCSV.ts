@@ -356,6 +356,7 @@ async function main() {
       const daysOverSLA = recalcDaysOverSLA(cycleTimeHours, baseStageCount, priority)
 
       docs.push({
+        decisionId: `Decision_${String(i + 1).padStart(6, '0')}`,
         status: mapStatus(row.Task_Type, completedAt),
         departmentId: departmentMeta?.departmentId ?? null,
         departmentName: departmentMeta?.departmentName ?? null,

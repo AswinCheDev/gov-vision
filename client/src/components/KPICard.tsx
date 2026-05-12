@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react"
+import { Link } from "react-router-dom"
 
 interface KPICardProps {
   title: string
@@ -13,6 +14,10 @@ interface KPICardProps {
   tone?: "hero" | "soft"
   size?: "lg" | "md"
   helperValue?: string
+  target?: number
+  warningThresholdPct?: number
+  criticalThresholdPct?: number
+  linkTo?: string
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -40,7 +45,11 @@ export default function KPICard({
   invertTrend = false,
   tone = "soft",
   size = "md",
-  helperValue
+  helperValue,
+  target,
+  warningThresholdPct,
+  criticalThresholdPct,
+  linkTo
 }: KPICardProps) {
   const [displayValue, setDisplayValue] = useState<number>(0)
   const prevRef = useRef<number>(0)
@@ -106,8 +115,17 @@ export default function KPICard({
   const iconBorder = isHero ? "1px solid rgba(255,255,255,0.3)" : `1px solid ${hexToRgba(accentColor, 0.32)}`
   const textureOpacity = isHero ? 0.08 : 0.16
   const circleColor = isHero ? "rgba(255,255,255,0.1)" : hexToRgba(accentColor, 0.10)
+  const numericValue = typeof value === "number" ? value : Number(value)
+  const hasThresholds = Number.isFinite(numericValue) && target !== undefined && warningThresholdPct !== undefined && criticalThresholdPct !== undefined
+  const thresholdColor = !hasThresholds
+    ? null
+    : numericValue >= target! * (warningThresholdPct! / 100)
+      ? "#10B981"
+      : numericValue >= target! * (criticalThresholdPct! / 100)
+        ? "#F59E0B"
+        : "#EF4444"
 
-  return (
+  const cardContent = (
     <div style={{
       background: cardBackground,
       borderRadius: "12px",
@@ -122,7 +140,9 @@ export default function KPICard({
       transition: "opacity 0.4s ease, transform 0.4s ease",
       position: "relative",
       overflow: "hidden",
-      cursor: "default"
+      cursor: linkTo ? "pointer" : "default",
+      borderTop: thresholdColor ? `4px solid ${thresholdColor}` : undefined,
+      height: "100%"
     }}>
       {/* Ambient texture */}
       <div style={{
@@ -261,4 +281,14 @@ export default function KPICard({
 
     </div>
   )
+
+  if (linkTo) {
+    return (
+      <Link to={linkTo} style={{ textDecoration: "none", display: "flex", height: "100%", borderRadius: "12px" }}>
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return cardContent
 }

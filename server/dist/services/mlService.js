@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.callAnomalyPredict = callAnomalyPredict;
+exports.retrainModels = retrainModels;
 const axios_1 = __importDefault(require("axios"));
 async function callAnomalyPredict(decisions) {
     const baseUrl = process.env.ML_SERVICE_URL;
@@ -24,4 +25,19 @@ async function callAnomalyPredict(decisions) {
         return response.data;
     }));
     return responses;
+}
+async function retrainModels() {
+    const baseUrl = process.env.ML_SERVICE_URL;
+    const serviceKey = process.env.SERVICE_KEY;
+    if (!baseUrl) {
+        throw new Error("ML_SERVICE_URL is not configured");
+    }
+    if (!serviceKey) {
+        throw new Error("SERVICE_KEY is not configured");
+    }
+    await axios_1.default.post(`${baseUrl}/ml/models/train`, {}, {
+        headers: {
+            "x-service-key": serviceKey
+        }
+    });
 }

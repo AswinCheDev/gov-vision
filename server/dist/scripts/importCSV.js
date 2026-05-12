@@ -9,6 +9,7 @@ const readline_1 = __importDefault(require("readline"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const m1Decisions_1 = __importDefault(require("../models/m1Decisions"));
+const Anomaly_1 = __importDefault(require("../models/Anomaly"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../.env") });
 const CSV_PATH = path_1.default.resolve(__dirname, "../Dataset", "AI_Workflow_Optimization_Dataset_2500_Rows_v1.csv");
 function splitCsvLine(line) {
@@ -227,7 +228,8 @@ async function main() {
         const targetMaxMs = Date.now();
         const targetMinMs = targetMaxMs - (365 * 24 * 60 * 60 * 1000); // 1 year ago
         await m1Decisions_1.default.deleteMany({});
-        console.log("Cleared existing m1_decisions collection");
+        await Anomaly_1.default.deleteMany({});
+        console.log("Cleared existing m1_decisions and anomalies collections");
         const docs = [];
         let unknownDepartmentCount = 0;
         for (let i = 0; i < csvRows.length; i++) {
@@ -243,8 +245,11 @@ async function main() {
             let completedAt = createdAt && durationMs !== null
                 ? new Date(createdAt.getTime() + durationMs)
                 : null;
-            // Simulate 5% pending cases for recent tasks
-            if (Math.random() < 0.05 && createdAt && (Date.now() - createdAt.getTime() < 30 * 24 * 60 * 60 * 1000)) {
+            // Organic simulation of pending tasks
+            // Logic: Recent tasks (last 60 days) with high workload are more likely to be pending
+            const isRecent = createdAt && (Date.now() - createdAt.getTime() < 60 * 24 * 60 * 60 * 1000);
+            const workloadScore = parseInt(String(row.Employee_Workload ?? "0"), 10) || 0;
+            if (isRecent && Math.random() < (0.05 + (workloadScore / 100))) {
                 completedAt = null;
             }
             const actualMinutes = parseNumber(row.Actual_Time_Minutes);
@@ -253,10 +258,13 @@ async function main() {
                 unknownDepartmentCount += 1;
             }
             const originalCycleTimeHours = actualMinutes / 60;
-            const originalRejectionCount = String(row.Delay_Flag ?? "").trim() === "1" ? randomOneToThree() : 0;
-            const baseRevisionCount = parseInt(String(row.Employee_Workload ?? "0"), 10) || 0;
+            const isDelayed = String(row.Delay_Flag ?? "").trim() === "1";
+            // Map rejectionCount to BPI distribution: Reduced to lower anomaly count
+            const baseRejectionCount = (isDelayed && Math.random() < 0.15) ? randomOneToThree() : 0;
+            const rawWorkload = parseInt(String(row.Employee_Workload ?? "0"), 10) || 0;
+            // Map revisionCount to BPI distribution: Reduced to lower anomaly count
+            const baseRevisionCount = (rawWorkload > 50 && Math.random() < 0.10) ? randomOneToThree() : 0;
             const baseCycleTimeHours = deriveCycleTime(originalCycleTimeHours);
-            const baseRejectionCount = deriveRejectionCount(originalRejectionCount);
             const baseStageCount = mapStageCount(row.Approval_Level);
             const priority = normalize(row.Priority_Level);
             // Use BPI-scaled cycle time hours to match Isolation Forest training distribution
@@ -269,6 +277,7 @@ async function main() {
             const revisionCount = baseRevisionCount;
             const daysOverSLA = recalcDaysOverSLA(cycleTimeHours, baseStageCount, priority);
             docs.push({
+                decisionId: `Decision_${String(i + 1).padStart(6, '0')}`,
                 status: mapStatus(row.Task_Type, completedAt),
                 departmentId: departmentMeta?.departmentId ?? null,
                 departmentName: departmentMeta?.departmentName ?? null,
@@ -284,6 +293,18 @@ async function main() {
                 source: 'ai_workflow',
                 isScored: false
             });
+            // Force demo anomalies (approx 2% of data)
+            if (Math.random() < 0.02) {
+                const last = docs[docs.length - 1];
+                if (last) {
+                    last.rejectionCount = 15;
+                    last.revisionCount = 10;
+                    last.cycleTimeHours = 500;
+                    last.daysOverSLA = 20;
+                    last.completedAt = new Date(); // Ensure it's not pending
+                    last.status = "approved";
+                }
+            }
             const prepared = i + 1;
             if (prepared % 100 === 0) {
                 console.log(`Prepared ${prepared} rows`);

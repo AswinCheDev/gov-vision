@@ -136,7 +136,7 @@ export async function runRiskScoringJob(): Promise<void> {
 			},
 			{
 				upsert: true,
-				new: true
+				returnDocument: 'after'
 			}
 		)
 

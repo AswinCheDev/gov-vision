@@ -4,9 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const validateJWT_1 = require("../middleware/validateJWT");
+const requireRole_1 = require("../middleware/requireRole");
 const cacheService_1 = require("../services/cacheService");
 const kpiAggregator_1 = require("../services/kpiAggregator");
 const m1Decisions_1 = __importDefault(require("../models/m1Decisions"));
+const m2Violations_1 = __importDefault(require("../models/m2Violations"));
 const KPI_Snapshot_1 = __importDefault(require("../models/KPI_Snapshot"));
 const Forecast_1 = __importDefault(require("../models/Forecast"));
 const FORECAST_TARGETS = [
@@ -20,15 +23,14 @@ const router = (0, express_1.Router)();
 // GET /api/analytics/kpi-summary
 // Org-wide KPI numbers
 // ─────────────────────────────────────────────
-router.get('/kpi-summary', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/kpi-summary', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     const cacheKey = `m3:kpi:org:${today}`;
     const { dateFrom, dateTo } = req.query;
     const startDate = dateFrom ? new Date(dateFrom) : new Date('2024-01-01');
-    const endDate = dateTo ? new Date(dateTo) : new Date();
+    let endDate = dateTo ? new Date(dateTo) : new Date();
+    if (dateTo)
+        endDate.setHours(23, 59, 59, 999);
     try {
         const data = await (0, cacheService_1.getOrSet)(cacheKey, 300, () => (0, kpiAggregator_1.aggregateOrgKPI)(startDate, endDate));
         return res.json(data);
@@ -42,16 +44,15 @@ async (req, res) => {
 // GET /api/analytics/kpi-summary/:deptId
 // Department-level KPI numbers
 // ─────────────────────────────────────────────
-router.get('/kpi-summary/:deptId', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/kpi-summary/:deptId', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     const { deptId } = req.params;
     const cacheKey = `m3:kpi:${deptId}:${today}`;
     const { dateFrom, dateTo } = req.query;
     const startDate = dateFrom ? new Date(dateFrom) : new Date('2024-01-01');
-    const endDate = dateTo ? new Date(dateTo) : new Date();
+    let endDate = dateTo ? new Date(dateTo) : new Date();
+    if (dateTo)
+        endDate.setHours(23, 59, 59, 999);
     try {
         const data = await (0, cacheService_1.getOrSet)(cacheKey, 300, () => (0, kpiAggregator_1.aggregateKPI)(deptId, startDate, endDate));
         return res.json(data);
@@ -64,10 +65,7 @@ async (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/analytics/decision-volume
 // ─────────────────────────────────────────────
-router.get('/decision-volume', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/decision-volume', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const { granularity = 'daily', dateFrom, dateTo, deptId } = req.query;
     const cacheKey = `m3:volume:${deptId || 'all'}:${granularity}:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
     try {
@@ -112,10 +110,7 @@ async (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/analytics/cycle-time-histogram
 // ─────────────────────────────────────────────
-router.get('/cycle-time-histogram', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/cycle-time-histogram', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const { deptId } = req.query;
     const cacheKey = `m3:cycletime:${deptId || 'all'}`;
     try {
@@ -151,12 +146,81 @@ async (req, res) => {
     }
 });
 // ─────────────────────────────────────────────
+// GET /api/analytics/rejection-reasons
+// ─────────────────────────────────────────────
+router.get('/rejection-reasons', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
+    const { dateFrom, dateTo } = req.query;
+    const cacheKey = `m3:rejections:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
+    try {
+        const data = await (0, cacheService_1.getOrSet)(cacheKey, 300, async () => {
+            const match = { source: 'ai_workflow', status: 'rejected' };
+            if (dateFrom)
+                match.createdAt = { $gte: new Date(dateFrom) };
+            if (dateTo)
+                match.createdAt = { ...match.createdAt, $lte: new Date(dateTo) };
+            const results = await m1Decisions_1.default.aggregate([
+                { $match: match },
+                {
+                    $group: {
+                        _id: { $ifNull: ['$rejectionReason', '$departmentName'] },
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { count: -1 } },
+                { $project: { _id: 0, name: '$_id', value: '$count' } }
+            ]).exec();
+            return results.length > 0 ? results : [{ name: 'Department Review', value: 0 }];
+        });
+        return res.json(data);
+    }
+    catch (err) {
+        console.error('[GET /api/analytics/rejection-reasons]', err.message);
+        return res.status(500).json({ error: err.message });
+    }
+});
+// ─────────────────────────────────────────────
+// GET /api/analytics/top-violated-policies
+// ─────────────────────────────────────────────
+router.get('/top-violated-policies', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
+    const cacheKey = 'm3:top-violated-policies';
+    try {
+        const data = await (0, cacheService_1.getOrSet)(cacheKey, 300, async () => {
+            const results = await m2Violations_1.default.aggregate([
+                {
+                    $group: {
+                        _id: {
+                            policyId: { $ifNull: ['$policyId', { $ifNull: ['$policyName', '$severity'] }] },
+                            policyName: { $ifNull: ['$policyName', { $ifNull: ['$policyId', '$severity'] }] }
+                        },
+                        violationCount: { $sum: 1 },
+                        departments: { $addToSet: '$department' }
+                    }
+                },
+                { $sort: { violationCount: -1 } },
+                { $limit: 10 },
+                {
+                    $project: {
+                        _id: 0,
+                        policyId: '$_id.policyId',
+                        policyName: '$_id.policyName',
+                        violationCount: 1,
+                        departments: 1
+                    }
+                }
+            ]).exec();
+            return results;
+        });
+        return res.json(data);
+    }
+    catch (err) {
+        console.error('[GET /api/analytics/top-violated-policies]', err.message);
+        return res.status(500).json({ error: err.message });
+    }
+});
+// ─────────────────────────────────────────────
 // GET /api/analytics/compliance-trend
 // ─────────────────────────────────────────────
-router.get('/compliance-trend', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/compliance-trend', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const { deptIds, dateFrom, dateTo } = req.query;
     const cacheKey = `m3:compliance:${deptIds || 'all'}:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
     try {
@@ -166,19 +230,29 @@ async (req, res) => {
                 match.snapshotDate = { $gte: new Date(dateFrom) };
             if (dateTo)
                 match.snapshotDate = { ...match.snapshotDate, $lte: new Date(dateTo) };
-            if (deptIds)
-                match.department = { $in: deptIds.split(',') };
-            return KPI_Snapshot_1.default.aggregate([
+            if (deptIds) {
+                match.departmentId = { $in: deptIds.split(',') };
+            }
+            // No filter if no deptIds, so it includes ORG and all departments
+            const results = await KPI_Snapshot_1.default.aggregate([
                 { $match: match },
                 { $sort: { snapshotDate: 1 } },
                 {
                     $group: {
-                        _id: '$department',
+                        _id: '$departmentName',
                         data: { $push: { date: '$snapshotDate', complianceRate: '$complianceRate' } },
                     },
                 },
                 { $project: { department: '$_id', data: 1, _id: 0 } },
             ]).exec();
+            // Sort so "Organization Wide" is always first in the legend
+            return results.sort((a, b) => {
+                if (a.department === "Organization Wide")
+                    return -1;
+                if (b.department === "Organization Wide")
+                    return 1;
+                return 0;
+            });
         });
         return res.json(data);
     }
@@ -190,10 +264,7 @@ async (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/analytics/risk-heatmap
 // ─────────────────────────────────────────────
-router.get('/risk-heatmap', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/risk-heatmap', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const { dateFrom, dateTo } = req.query;
     const cacheKey = `m3:riskheatmap:${dateFrom || 'nd'}:${dateTo || 'nd'}`;
     try {
@@ -203,12 +274,12 @@ async (req, res) => {
                 match.snapshotDate = { $gte: new Date(dateFrom) };
             if (dateTo)
                 match.snapshotDate = { ...match.snapshotDate, $lte: new Date(dateTo) };
-            return KPI_Snapshot_1.default.aggregate([
+            const results = await KPI_Snapshot_1.default.aggregate([
                 { $match: match },
                 { $sort: { snapshotDate: -1 } },
                 {
                     $group: {
-                        _id: '$departmentId',
+                        _id: '$departmentName',
                         Low: { $sum: { $cond: [{ $eq: ['$riskLevel', 'low'] }, 1, 0] } },
                         Medium: { $sum: { $cond: [{ $eq: ['$riskLevel', 'medium'] }, 1, 0] } },
                         High: { $sum: { $cond: [{ $eq: ['$riskLevel', 'high'] }, 1, 0] } },
@@ -233,6 +304,14 @@ async (req, res) => {
                     },
                 },
             ]).exec();
+            // Sort so "Organization Wide" is always first
+            return results.sort((a, b) => {
+                if (a.department === "Organization Wide")
+                    return -1;
+                if (b.department === "Organization Wide")
+                    return 1;
+                return 0;
+            });
         });
         return res.json(data);
     }
@@ -245,10 +324,7 @@ async (req, res) => {
 // GET /api/analytics/forecast
 // Forecast data for a department and horizon
 // ─────────────────────────────────────────────
-router.get('/forecast', 
-// validateJWT, // TEMP: commented for development testing
-// requireRole(['admin', 'manager', 'executive', 'analyst']), // TEMP: commented for development testing
-async (req, res) => {
+router.get('/forecast', validateJWT_1.validateJWT, (0, requireRole_1.requireRole)(['admin', 'manager', 'analyst']), async (req, res) => {
     const { deptId = 'org', horizon = '30', target = 'volume' } = req.query;
     const parsedHorizon = Number.parseInt(horizon, 10);
     const parsedTarget = String(target).toLowerCase();
