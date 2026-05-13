@@ -248,7 +248,7 @@ export default function AnomalyFeed({ anomalies, onAcknowledge }: AnomalyFeedPro
                       {cfg.label}
                     </span>
                     <span style={{ fontSize: "10px", color: "#94A3B8", fontFamily: "'Outfit', sans-serif" }}>
-                      Score: {anomaly.anomalyScore.toFixed(3)}
+                      Score: {anomaly.anomalyScore.toFixed(2)}
                     </span>
                   </div>
                   <span style={{ fontSize: "10px", color: "#94A3B8", fontFamily: "'Outfit', sans-serif", flexShrink: 0 }}>

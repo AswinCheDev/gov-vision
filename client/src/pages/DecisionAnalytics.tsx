@@ -12,6 +12,7 @@ import DecisionVolumeChart from "../components/charts/DecisionVolumeChart";
 import CycleTimeHistogram from "../components/charts/CycleTimeHistogram";
 import SkeletonLoader from "../components/SkeletonLoader";
 import AccentDropdown from "../components/AccentDropdown";
+import { getDepartmentColor } from "../utils/departmentColors";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import KPICard from "../components/KPICard";
@@ -321,7 +322,7 @@ export default function DecisionAnalytics() {
                     (summary.approvedCount /
                       Math.max(summary.totalDecisions, 1)) *
                     100
-                  ).toFixed(1),
+                  ).toFixed(2),
                 ),
               },
             ]
@@ -339,7 +340,7 @@ export default function DecisionAnalytics() {
                       (
                         (row.approvedCount / Math.max(row.totalDecisions, 1)) *
                         100
-                      ).toFixed(1),
+                      ).toFixed(2),
                     ),
                   };
                 },
@@ -428,6 +429,8 @@ export default function DecisionAnalytics() {
             onChange={(value) => setDeptId(value)}
             width="180px"
           />
+          <span style={{ color: "#CBD5E1" }}>-</span>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>From</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateFrom)}
@@ -473,6 +476,7 @@ export default function DecisionAnalytics() {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </div>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>To</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateTo)}
@@ -549,7 +553,7 @@ export default function DecisionAnalytics() {
             />
             <KPICard 
               title="Approval Rate" 
-              value={Number((((kpi?.approvedCount ?? 0) / Math.max(total, 1)) * 100).toFixed(1))}
+              value={Number((((kpi?.approvedCount ?? 0) / Math.max(total, 1)) * 100).toFixed(2))}
               unit="%" 
               icon={Icons.approval} 
               accentColor="#C9EFDF" 
@@ -559,7 +563,7 @@ export default function DecisionAnalytics() {
             />
             <KPICard 
               title="Rejection Rate" 
-              value={Number((((kpi?.rejectedCount ?? 0) / Math.max(total, 1)) * 100).toFixed(1))}
+              value={Number((((kpi?.rejectedCount ?? 0) / Math.max(total, 1)) * 100).toFixed(2))}
               unit="%" 
               icon={Icons.rejection} 
               accentColor="#FFD0D4" 
@@ -570,7 +574,7 @@ export default function DecisionAnalytics() {
             />
             <KPICard 
               title="Avg Cycle Time" 
-              value={Number((kpi?.avgCycleTimeHours ?? 0).toFixed(1))}
+              value={Number((kpi?.avgCycleTimeHours ?? 0).toFixed(2))}
               unit="h" 
               icon={Icons.cycle} 
               accentColor="#FFE0C0" 
@@ -674,7 +678,6 @@ export default function DecisionAnalytics() {
 }
 
 function PieReasons({ data }: { data: RejectionSlice[] }) {
-  const colors = ["#EF4444", "#F97316", "#F59E0B", "#8B5CF6", "#06B6D4"];
   const pieData = data.length > 0 ? data : [{ name: "No data", value: 1 }];
   return (
     <div style={{ height: 350 }}>
@@ -695,10 +698,10 @@ function PieReasons({ data }: { data: RejectionSlice[] }) {
               type: "pie",
               radius: [70, 130],
               center: ["50%", "42%"],
-              data: pieData.map((item, index) => ({
+              data: pieData.map((item) => ({
                 name: item.name,
                 value: item.value,
-                itemStyle: { color: colors[index % colors.length] },
+                itemStyle: { color: item.name === "No data" ? "#CBD5E1" : getDepartmentColor(item.name) },
               })),
               label: {
                 fontFamily: "'Outfit', sans-serif",

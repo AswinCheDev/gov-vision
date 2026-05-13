@@ -6,6 +6,7 @@ import type {
   IFeatureImportance,
   IFeatureValues
 } from "../types"
+import { RISK_LEVEL_THEME } from "../types"
 import AnomalyTableRow from "../components/AnomalyTableRow"
 import FeatureImportanceChart from "../components/FeatureImportanceChart"
 
@@ -78,7 +79,7 @@ function computeFeatureImportance(anomalies: IAnomaly[]): IFeatureImportance[] {
   return averages
     .map(({ feature, avg }) => ({
       feature,
-      weight: Number(((avg / total) * 100).toFixed(1))
+      weight: Number(((avg / total) * 100).toFixed(2))
     }))
     .sort((a, b) => b.weight - a.weight)
 }
@@ -387,30 +388,6 @@ export default function DeepInsights() {
                   Detailed anomaly investigation with severity and department filtering.
                 </p>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  background: "#fff",
-                  border: "1px solid #E6EBF2",
-                  borderRadius: 10,
-                  padding: "8px 14px",
-                  flexShrink: 0
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "#22C55E",
-                    boxShadow: "0 0 0 3px rgba(34,197,94,0.2)",
-                    display: "inline-block"
-                  }}
-                />
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#0F172A" }}>Live</span>
-              </div>
             </div>
           </div>
 
@@ -439,7 +416,7 @@ export default function DeepInsights() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
               gap: 12
             }}
           >
@@ -455,28 +432,37 @@ export default function DeepInsights() {
               label="Critical"
               value={anomalyData.Critical.length}
               sub="Needs immediate action"
-              subColor="#F87171"
-              accentColor="#B91C1C"
-              accentBg="#FFF5F5"
-              accentBorder="#FECACA"
+              subColor={RISK_LEVEL_THEME.Critical.text}
+              accentColor={RISK_LEVEL_THEME.Critical.text}
+              accentBg={RISK_LEVEL_THEME.Critical.bg}
+              accentBorder={RISK_LEVEL_THEME.Critical.border}
             />
             <StatCard
               label="High"
               value={anomalyData.High.length}
               sub="Review within 24h"
-              subColor="#FB923C"
-              accentColor="#C2410C"
-              accentBg="#FFF8F0"
-              accentBorder="#FED7AA"
+              subColor={RISK_LEVEL_THEME.High.text}
+              accentColor={RISK_LEVEL_THEME.High.text}
+              accentBg={RISK_LEVEL_THEME.High.bg}
+              accentBorder={RISK_LEVEL_THEME.High.border}
             />
             <StatCard
-              label="Medium / Low"
-              value={anomalyData.Medium.length + anomalyData.Low.length}
+              label="Medium"
+              value={anomalyData.Medium.length}
               sub="Monitor & schedule"
-              subColor="#4ADE80"
-              accentColor="#15803D"
-              accentBg="#F0FDF4"
-              accentBorder="#BBF7D0"
+              subColor={RISK_LEVEL_THEME.Medium.text}
+              accentColor={RISK_LEVEL_THEME.Medium.text}
+              accentBg={RISK_LEVEL_THEME.Medium.bg}
+              accentBorder={RISK_LEVEL_THEME.Medium.border}
+            />
+            <StatCard
+              label="Low"
+              value={anomalyData.Low.length}
+              sub="Watch for changes"
+              subColor={RISK_LEVEL_THEME.Low.text}
+              accentColor={RISK_LEVEL_THEME.Low.text}
+              accentBg={RISK_LEVEL_THEME.Low.bg}
+              accentBorder={RISK_LEVEL_THEME.Low.border}
             />
           </div>
 
@@ -572,31 +558,72 @@ export default function DeepInsights() {
                   style={{
                     width: "100%",
                     borderCollapse: "collapse",
-                    minWidth: 980
+                    minWidth: 1090,
+                    tableLayout: "fixed"
                   }}
                 >
                   <thead>
                     <tr style={{ background: "#FAFBFC" }}>
-                      {tableHeaders.map(header => (
-                        <th
-                          key={header}
-                          style={{
-                            textAlign: "left",
-                            padding: "11px 14px",
-                            fontSize: 10,
-                            fontWeight: 700,
-                            color: "#94A3B8",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.07em",
-                            borderBottom: "1px solid #F1F5F9",
-                            whiteSpace: "nowrap"
-                          }}
-                        >
-                          {header}
-                        </th>
-                      ))}
+                      {tableHeaders.map((header, idx) => {
+                        const widths = ["100px", "160px", "140px", "100px", "75px", "95px", "85px", "135px", "100px"]
+                        return (
+                          <th
+                            key={header}
+                            style={{
+                              textAlign: idx >= 4 && idx <= 6 ? "center" : "left",
+                              padding: "13px 8px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: "#94A3B8",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.07em",
+                              borderBottom: "1px solid #F1F5F9",
+                              whiteSpace: "nowrap",
+                              width: widths[idx]
+                            }}
+                          >
+                            {header}
+                          </th>
+                        )
+                      })}
                     </tr>
                   </thead>
+                </table>
+              </div>
+
+              {/* Scrollable tbody container */}
+              <div
+                style={{
+                  maxHeight: "500px",
+                  overflowY: "scroll",
+                  overflowX: "auto",
+                  scrollBehavior: "smooth"
+                }}
+              >
+                <style>{`
+                  [data-anomaly-scroll]::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  [data-anomaly-scroll]::-webkit-scrollbar-track {
+                    background: "#F8FAFC";
+                  }
+                  [data-anomaly-scroll]::-webkit-scrollbar-thumb {
+                    background: "#CBD5E1";
+                    border-radius: 4px;
+                  }
+                  [data-anomaly-scroll]::-webkit-scrollbar-thumb:hover {
+                    background: "#94A3B8";
+                  }
+                `}</style>
+                <table
+                  data-anomaly-scroll
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    minWidth: 1090,
+                    tableLayout: "fixed"
+                  }}
+                >
                   <tbody>
                     {filtered.map(anomaly => (
                       <AnomalyTableRow

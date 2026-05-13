@@ -33,7 +33,7 @@ function buildTooltip(total: number) {
   return ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null
     const count = payload[0].value as number
-    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0"
+    const pct = total > 0 ? ((count / total) * 100).toFixed(2) : "0.00"
     return (
       <div style={{
         background: "white", border: "1px solid #E2E6ED",

@@ -382,9 +382,9 @@ export default function ForecastPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "18px" }}>
-          <SummaryCard label={`Projected total (${metricUnit(target)})`} value={summary.total ? summary.total.toFixed(1) : "0.0"} />
-          <SummaryCard label={`Average per day (${metricUnit(target)})`} value={summary.average ? summary.average.toFixed(1) : "0.0"} />
-          <SummaryCard label="Peak day" value={summary.peakPoint ? `${formatDateLabel(summary.peakPoint.ds)} · ${summary.peakPoint.yhat.toFixed(1)}` : "n/a"} />
+          <SummaryCard label={`Projected total (${metricUnit(target)})`} value={summary.total ? summary.total.toFixed(2) : "0.00"} />
+          <SummaryCard label={`Average per day (${metricUnit(target)})`} value={summary.average ? summary.average.toFixed(2) : "0.00"} />
+          <SummaryCard label="Peak day" value={summary.peakPoint ? `${formatDateLabel(summary.peakPoint.ds)} · ${summary.peakPoint.yhat.toFixed(2)}` : "n/a"} />
           <SummaryCard label="Forecast window" value={`${horizon} days`} />
         </div>
 

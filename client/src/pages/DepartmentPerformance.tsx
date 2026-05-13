@@ -4,6 +4,8 @@ import type { EChartsOption } from "echarts"
 import { getDeptKpiSummary } from "../services/api"
 import type { IFilter, IKpiSummary } from "../types"
 import SkeletonLoader from "../components/SkeletonLoader"
+import AccentDropdown from "../components/AccentDropdown"
+import { getDepartmentColor } from "../utils/departmentColors"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 
@@ -15,6 +17,11 @@ const DEPARTMENT_OPTIONS = [
   { label: "Customer Service", value: "CS005" }
 ]
 
+const DEPARTMENT_FILTER_OPTIONS = [
+  { label: "All Departments", value: "all" },
+  ...DEPARTMENT_OPTIONS
+]
+
 const METRICS = [
   { label: "Cycle Time", key: "avgCycleTimeHours" },
   { label: "Compliance", key: "complianceRate" },
@@ -24,6 +31,7 @@ const METRICS = [
 ] as const
 
 type MetricKey = typeof METRICS[number]["key"]
+type MetricTabKey = MetricKey | "all"
 
 function todayString(): string {
   return new Date().toISOString().split("T")[0]
@@ -44,12 +52,16 @@ function riskValue(summary: Partial<IKpiSummary>): number {
 export default function DepartmentPerformance() {
   const [dateFrom, setDateFrom] = useState("2024-01-01")
   const [dateTo, setDateTo] = useState(todayString())
-  const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>(DEPARTMENT_OPTIONS.map(option => option.value))
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<"bar" | "radar">("bar")
-  const [selectedMetric, setSelectedMetric] = useState<MetricKey>("complianceRate")
+  const [selectedMetric, setSelectedMetric] = useState<MetricTabKey>("all")
   const [current, setCurrent] = useState<Array<IKpiSummary & { departmentId: string }>>([])
   const [previous, setPrevious] = useState<Array<IKpiSummary & { departmentId: string }>>([])
+  const selectedDeptIds = useMemo(
+    () => selectedDeptFilter === "all" ? DEPARTMENT_OPTIONS.map(option => option.value) : [selectedDeptFilter],
+    [selectedDeptFilter]
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -107,21 +119,21 @@ export default function DepartmentPerformance() {
     },
     series: [{
       type: "radar",
-      data: rows.map((row, index) => ({
+      data: rows.map(row => ({
         name: row.displayName,
         value: [
-          Number((row.avgCycleTimeHours ?? 0).toFixed(1)),
-          Number((row.complianceRate ?? 0).toFixed(1)),
+          Number((row.avgCycleTimeHours ?? 0).toFixed(2)),
+          Number((row.complianceRate ?? 0).toFixed(2)),
           Number(row.totalDecisions ?? 0),
           Number(row.riskScore ?? 0),
           Number(row.violationCount ?? 0)
         ],
-        lineStyle: { color: COLORS[index % COLORS.length] },
-        areaStyle: { color: COLORS[index % COLORS.length], opacity: 0.12 },
-        itemStyle: { color: COLORS[index % COLORS.length] }
+        lineStyle: { color: getDepartmentColor(row.departmentId) },
+        areaStyle: { color: getDepartmentColor(row.departmentId), opacity: 0.12 },
+        itemStyle: { color: getDepartmentColor(row.departmentId) }
       }))
     }],
-    color: COLORS
+    color: DEPARTMENT_OPTIONS.map(option => getDepartmentColor(option.value))
   }
 
   const sortedRows = useMemo(() => [...rows].sort((a, b) => Number((b as any)[selectedMetric] ?? 0) - Number((a as any)[selectedMetric] ?? 0)), [rows, selectedMetric])
@@ -140,9 +152,14 @@ export default function DepartmentPerformance() {
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <select multiple value={selectedDeptIds} onChange={event => setSelectedDeptIds(Array.from(event.target.selectedOptions).map(option => option.value).slice(0, 5))} style={{ ...selectStyle, height: 112, minWidth: 220 }}>
-            {DEPARTMENT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
+          <AccentDropdown
+            value={selectedDeptFilter}
+            options={DEPARTMENT_FILTER_OPTIONS}
+            onChange={value => setSelectedDeptFilter(value)}
+            width="220px"
+          />
+          <span style={{ color: "#CBD5E1" }}>-</span>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>From</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateFrom)}
@@ -177,6 +194,7 @@ export default function DepartmentPerformance() {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </div>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>To</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateTo)}
@@ -215,6 +233,9 @@ export default function DepartmentPerformance() {
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => setSelectedMetric("all")} style={{ ...tabButtonStyle, background: selectedMetric === "all" ? "#0F172A" : "white", color: selectedMetric === "all" ? "white" : "#334155" }}>
+          All
+        </button>
         {METRICS.map(metric => (
           <button key={metric.key} type="button" onClick={() => setSelectedMetric(metric.key)} style={{ ...tabButtonStyle, background: selectedMetric === metric.key ? "#0F172A" : "white", color: selectedMetric === metric.key ? "white" : "#334155" }}>
             {metric.label}
@@ -237,7 +258,7 @@ export default function DepartmentPerformance() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 20 }}>
               {METRICS.map(metric => (
-                <MetricBarCard key={metric.key} title={metric.label} rows={sortedRows} metricKey={metric.key} highlighted={selectedMetric === metric.key} />
+                <MetricBarCard key={metric.key} title={metric.label} rows={sortedRows} metricKey={metric.key} highlighted={selectedMetric === metric.key} dimmed={selectedMetric !== "all" && selectedMetric !== metric.key} />
               ))}
             </div>
           )}
@@ -263,9 +284,9 @@ export default function DepartmentPerformance() {
                     <tr key={row.departmentId} style={{ borderTop: "1px solid #E2E8F0" }}>
                       <td style={tdStyle}>{index + 1}</td>
                       <td style={tdStyle}>{row.displayName}</td>
-                      <td style={tdStyle}>{Number(row.avgCycleTimeHours ?? 0).toFixed(1)}h</td>
+                      <td style={tdStyle}>{Number(row.avgCycleTimeHours ?? 0).toFixed(2)}h</td>
                       <td style={tdStyle}>{Number(row.totalDecisions ?? 0)}</td>
-                      <td style={tdStyle}>{Number((row.complianceRate ?? 0).toFixed(1))}%</td>
+                      <td style={tdStyle}>{Number((row.complianceRate ?? 0).toFixed(2))}%</td>
                       <td style={tdStyle}>{Number(row.riskScore ?? 0)}</td>
                       <td style={tdStyle}>{Number(row.violationCount ?? 0)}</td>
                       <td style={tdStyle}>{row.rankDelta === 0 ? "—" : row.rankDelta > 0 ? "▲ +1" : "▼ -1"}</td>
@@ -281,18 +302,27 @@ export default function DepartmentPerformance() {
   )
 }
 
-function MetricBarCard({ title, rows, metricKey, highlighted }: { title: string; rows: Array<IKpiSummary & { departmentId: string; displayName: string }>; metricKey: MetricKey; highlighted: boolean }) {
+function MetricBarCard({ title, rows, metricKey, highlighted, dimmed }: { title: string; rows: Array<IKpiSummary & { departmentId: string; displayName: string }>; metricKey: MetricKey; highlighted: boolean; dimmed: boolean }) {
   const option: EChartsOption = {
     grid: { top: 18, right: 16, bottom: 48, left: 42 },
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const rows = Array.isArray(params) ? params : [params]
+        const first = rows[0]
+        if (!first) return ""
+        const value = typeof first.value === "number" ? first.value : Number(first.value ?? 0)
+        return `${first.axisValueLabel ?? ""}<br/>${first.marker ?? ""}${title}: <b>${value.toFixed(2)}</b>`
+      }
+    },
     xAxis: { type: "category", data: rows.map(row => row.displayName), axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, rotate: 0 } },
     yAxis: { type: "value", splitLine: { lineStyle: { color: "#EEF2F7" } }, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10 } },
     series: [{
       type: "bar",
-      data: rows.map((row, index) => ({
+      data: rows.map(row => ({
         value: Number((row as any)[metricKey] ?? 0),
         itemStyle: {
-          color: COLORS[index % COLORS.length],
+          color: getDepartmentColor(row.departmentId),
           opacity: highlighted ? 1 : 0.82
         }
       })),
@@ -301,14 +331,13 @@ function MetricBarCard({ title, rows, metricKey, highlighted }: { title: string;
   }
 
   return (
-    <section style={sectionStyle}>
+    <section style={{ ...sectionStyle, opacity: dimmed ? 0.35 : 1, filter: dimmed ? "grayscale(1) saturate(0.35)" : "none", transition: "opacity 0.2s ease, filter 0.2s ease" }}>
       <h2 style={headingStyle}>{title}</h2>
       <ReactECharts option={option} style={{ height: 260 }} />
     </section>
   )
 }
 
-const COLORS = ["#0EA5E9", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"]
 const sectionStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E8F0", borderRadius: 18, padding: 18, boxShadow: "0 1px 6px rgba(15,23,42,0.05)" }
 const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
 const selectStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E6ED", borderRadius: "8px", padding: "10px 14px", fontSize: "14px", fontFamily: "'Outfit', sans-serif", color: "#374151", outline: "none", cursor: "pointer", minWidth: 160 }

@@ -73,58 +73,60 @@ export default function AnomalyTableRow({ anomaly, onAcknowledge }: Props) {
         event.currentTarget.style.background = "transparent"
       }}
     >
-      <td style={{ padding: "10px 12px", color: "#64748B", fontSize: "12px" }}>
+      <td style={{ padding: "12px 8px", color: "#64748B", fontSize: "13px", width: "100px" }}>
         {createdAt ? new Date(createdAt).toLocaleDateString() : "-"}
       </td>
-      <td style={{ padding: "10px 12px", fontSize: "12px" }}>
+      <td style={{ padding: "12px 8px", fontSize: "13px", width: "160px" }}>
         {decisionId ? (
           <a
             href={`http://localhost:3001/decisions/${decisionId}`}
             target="_blank"
             rel="noreferrer"
-            style={{ color: "#374151", textDecoration: "none", fontFamily: "monospace", fontWeight: 700 }}
+            style={{ color: "#374151", textDecoration: "none", fontFamily: "monospace", fontWeight: 700, wordBreak: "break-all" }}
           >
-            {decisionId.slice(0, 8)}...
+            {decisionId.length > 15 ? decisionId.slice(0, 12) + "..." : decisionId}
           </a>
         ) : (
           <span style={{ color: "#94A3B8" }}>N/A</span>
         )}
       </td>
-      <td style={{ padding: "10px 12px", fontSize: "12px", color: "#334155" }}>{getDepartmentLabel(anomaly.department)}</td>
-      <td style={{ padding: "10px 12px" }}>
+      <td style={{ padding: "12px 8px", fontSize: "13px", color: "#334155", width: "140px" }}>{getDepartmentLabel(anomaly.department)}</td>
+      <td style={{ padding: "12px 8px", width: "100px" }}>
         <span
           style={{
-            fontSize: "11px",
+            fontSize: "12px",
             fontWeight: 700,
-            padding: "3px 8px",
+            padding: "4px 9px",
             borderRadius: "999px",
             background: severityColors[anomaly.severity] ?? "#E5E7EB",
-            color: severityText[anomaly.severity] ?? "#374151"
+            color: severityText[anomaly.severity] ?? "#374151",
+            display: "inline-block"
           }}
         >
           {anomaly.severity}
         </span>
       </td>
-      <td style={{ padding: "10px 12px", fontSize: "12px", fontFamily: "monospace", color: "#0F172A" }}>
-        {anomaly.anomalyScore.toFixed(3)}
+      <td style={{ padding: "12px 8px", fontSize: "13px", fontFamily: "monospace", color: "#0F172A", width: "75px", textAlign: "center" }}>
+        {anomaly.anomalyScore.toFixed(2)}
       </td>
-      <td style={{ padding: "10px 12px", fontSize: "12px", color: "#334155" }}>{cycleTimeHours}h</td>
-      <td style={{ padding: "10px 12px", fontSize: "12px", color: "#334155" }}>{rejectionCount}</td>
-      <td style={{ padding: "10px 12px" }}>
+      <td style={{ padding: "12px 8px", fontSize: "13px", color: "#334155", width: "95px", textAlign: "center" }}>{cycleTimeHours}h</td>
+      <td style={{ padding: "12px 8px", fontSize: "13px", color: "#334155", width: "85px", textAlign: "center" }}>{rejectionCount}</td>
+      <td style={{ padding: "12px 8px", width: "135px" }}>
         <span
           style={{
-            fontSize: "11px",
+            fontSize: "12px",
             fontWeight: 600,
-            padding: "3px 8px",
+            padding: "4px 9px",
             borderRadius: "999px",
             background: anomaly.isAcknowledged ? "#DCFCE7" : "#F1F5F9",
-            color: anomaly.isAcknowledged ? "#166534" : "#6B7280"
+            color: anomaly.isAcknowledged ? "#166534" : "#6B7280",
+            display: "inline-block"
           }}
         >
           {anomaly.isAcknowledged ? "Acknowledged" : "Unacknowledged"}
         </span>
       </td>
-      <td style={{ padding: "10px 12px" }}>
+      <td style={{ padding: "12px 8px", width: "100px", textAlign: "center" }}>
         {!anomaly.isAcknowledged && (
           <button
             onClick={() => void handleClick()}

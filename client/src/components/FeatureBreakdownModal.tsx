@@ -26,7 +26,7 @@ export default function FeatureBreakdownModal({ entry, onClose }: Props) {
         .map(([key, value]) => ({
           name: FEATURE_LABELS[key] || key,
           importance: value,
-          percentage: (value * 100).toFixed(1)
+          percentage: (value * 100).toFixed(2)
         }))
         .sort((a, b) => b.importance - a.importance)
     : []
@@ -40,7 +40,7 @@ export default function FeatureBreakdownModal({ entry, onClose }: Props) {
         <div className="flex items-center justify-between p-5 border-b">
           <div>
             <h2 className="text-lg font-bold text-gray-900">{entry.department}</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Risk Score: {entry.riskScore.toFixed(1)} / 100</p>
+            <p className="text-sm text-gray-500 mt-0.5">Risk Score: {entry.riskScore.toFixed(2)} / 100</p>
           </div>
           <div className="flex items-center gap-3">
             <RiskLevelBadge level={entry.riskLevel} />

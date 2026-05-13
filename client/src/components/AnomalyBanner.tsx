@@ -96,7 +96,7 @@ export default function AnomalyBanner({ anomalies, onAcknowledge }: AnomalyBanne
               </p>
 
               <p style={{ margin: "6px 0 0", fontSize: "11px", color: "#94A3B8" }}>
-                Score: {anomaly.anomalyScore.toFixed(3)} | Cycle: {anomaly.featureValues?.cycleTimeHours ?? 0}h | Rejections: {anomaly.featureValues?.rejectionCount ?? 0}
+                Score: {anomaly.anomalyScore.toFixed(2)} | Cycle: {anomaly.featureValues?.cycleTimeHours ?? 0}h | Rejections: {anomaly.featureValues?.rejectionCount ?? 0}
               </p>
             </div>
 

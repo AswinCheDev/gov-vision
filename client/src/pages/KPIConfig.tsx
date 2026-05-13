@@ -13,11 +13,11 @@ type ConfigRow = {
 
 const KPI_DEFINITIONS = [
   { kpiName: "Total Decisions", live: (summary: IKpiSummary) => Number(summary.totalDecisions ?? 0) },
-  { kpiName: "Approval Rate", live: (summary: IKpiSummary) => Number(((summary.approvedCount / Math.max(summary.totalDecisions, 1)) * 100).toFixed(1)) },
-  { kpiName: "Rejection Rate", live: (summary: IKpiSummary) => Number(((summary.rejectedCount / Math.max(summary.totalDecisions, 1)) * 100).toFixed(1)) },
-  { kpiName: "Avg Approval Time", live: (summary: IKpiSummary) => Number((summary.avgCycleTimeHours ?? 0).toFixed(1)) },
-  { kpiName: "Bottleneck Rate", live: (summary: IKpiSummary) => Number(((summary as any).bottleneckRate ?? 0).toFixed(1)) },
-  { kpiName: "Compliance Rate", live: (summary: IKpiSummary) => Number((summary.complianceRate ?? 0).toFixed(1)) },
+  { kpiName: "Approval Rate", live: (summary: IKpiSummary) => Number(((summary.approvedCount / Math.max(summary.totalDecisions, 1)) * 100).toFixed(2)) },
+  { kpiName: "Rejection Rate", live: (summary: IKpiSummary) => Number(((summary.rejectedCount / Math.max(summary.totalDecisions, 1)) * 100).toFixed(2)) },
+  { kpiName: "Avg Approval Time", live: (summary: IKpiSummary) => Number((summary.avgCycleTimeHours ?? 0).toFixed(2)) },
+  { kpiName: "Bottleneck Rate", live: (summary: IKpiSummary) => Number(((summary as any).bottleneckRate ?? 0).toFixed(2)) },
+  { kpiName: "Compliance Rate", live: (summary: IKpiSummary) => Number((summary.complianceRate ?? 0).toFixed(2)) },
   { kpiName: "Violation Count", live: (summary: IKpiSummary) => Number(summary.violationCount ?? 0) },
   { kpiName: "Decision Throughput", live: (summary: IKpiSummary) => Math.round((summary.totalDecisions ?? 0) / 30) },
   { kpiName: "Anomaly Count", live: (summary: IKpiSummary) => Number(summary.anomalyCount ?? 0) },

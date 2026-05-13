@@ -6,6 +6,7 @@ import type { IKpiSummary, IRiskHeatmapRow, RiskLevel } from "../types"
 import { RISK_LEVEL_COLORS } from "../types"
 import SkeletonLoader from "../components/SkeletonLoader"
 import AccentDropdown from "../components/AccentDropdown"
+import { getDepartmentColor } from "../utils/departmentColors"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import KPICard from "../components/KPICard"
@@ -129,7 +130,7 @@ export default function ComplianceAnalytics() {
     const data = filteredTrend.flatMap((entry, yIndex) =>
       entry.data.map(point => {
         const xIndex = dateKeys.indexOf(point.date)
-        return [xIndex, yIndex, Number(point.complianceRate.toFixed(1))]
+        return [xIndex, yIndex, Number(point.complianceRate.toFixed(2))]
       })
     )
 
@@ -143,7 +144,7 @@ export default function ComplianceAnalytics() {
           if (!value) return ""
 
           const department = departmentNames[value[1]] ?? ""
-          const score = typeof value[2] === "number" ? value[2].toFixed(1) : value[2]
+          const score = typeof value[2] === "number" ? value[2].toFixed(2) : value[2]
 
           return `${dateLabel}<br/>${department}: ${score}%`
         }
@@ -209,6 +210,8 @@ export default function ComplianceAnalytics() {
             onChange={value => setDeptId(value)}
             width="200px"
           />
+          <span style={{ color: "#CBD5E1" }}>-</span>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>From</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateFrom)}
@@ -243,6 +246,7 @@ export default function ComplianceAnalytics() {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </div>
+          <span style={{ color: "#94A3B8", fontSize: "11px", fontWeight: 600 }}>To</span>
           <div style={{ position: "relative" }}>
             <DatePicker
               selected={new Date(dateTo)}
@@ -287,7 +291,7 @@ export default function ComplianceAnalytics() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: 16 }}>
             <KPICard 
               title="Compliance Rate" 
-              value={Number((kpi?.complianceRate ?? 0).toFixed(1))}
+              value={Number((kpi?.complianceRate ?? 0).toFixed(2))}
               unit="%" 
               icon={Icons.compliance} 
               accentColor="#41A471" 
@@ -358,12 +362,23 @@ export default function ComplianceAnalytics() {
 function buildTrendOption(trend: Array<{ department: string; data: Array<{ date: string; complianceRate: number }> }>): EChartsOption {
   const dates = Array.from(new Set(trend.flatMap(row => row.data.map(point => point.date)))).sort()
   return {
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      formatter: (params: any) => {
+        const rows = Array.isArray(params) ? params : [params]
+        const dateLabel = String(rows[0]?.axisValue ?? "")
+        const lines = rows.map((item: any) => {
+          const value = typeof item?.value === "number" ? item.value.toFixed(2) : Number(item?.value ?? 0).toFixed(2)
+          return `${item.marker ?? ""}${item.seriesName} <b>${value}%</b>`
+        }).join("<br/>")
+        return `${dateLabel}<br/>${lines}`
+      }
+    },
     legend: { bottom: 0, textStyle: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
     grid: { top: 18, right: 20, bottom: 42, left: 42 },
     xAxis: { type: "category", data: dates, axisLabel: { fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B", rotate: 0, formatter: value => formatFriendlyDate(String(value)) } },
     yAxis: { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%", fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#64748B" } },
-    series: trend.map((row, index) => ({
+    series: trend.map((row) => ({
       type: "line",
       name: row.department,
       smooth: true,
@@ -371,13 +386,11 @@ function buildTrendOption(trend: Array<{ department: string; data: Array<{ date:
       lineStyle: { width: 2 },
       symbol: "circle",
       symbolSize: 6,
-      itemStyle: { color: COLORS[index % COLORS.length] }
+      itemStyle: { color: getDepartmentColor(row.department) }
     })),
-    color: COLORS
+    color: trend.map(row => getDepartmentColor(row.department))
   }
 }
-
-const COLORS = ["#0EA5E9", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"]
 const sectionStyle: React.CSSProperties = { background: "white", border: "1px solid #E2E8F0", borderRadius: 18, padding: 18, boxShadow: "0 1px 6px rgba(15,23,42,0.05)" }
 const headingStyle: React.CSSProperties = { margin: 0, marginBottom: 12, fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#0F172A" }
 const thStyle: React.CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #E2E8F0" }

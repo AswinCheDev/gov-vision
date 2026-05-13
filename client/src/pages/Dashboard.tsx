@@ -120,8 +120,8 @@ export default function Dashboard() {
   }, [fetchAll])
 
   const totalDecisions = kpi?.totalDecisions ?? 0
-  const approvalRate   = totalDecisions > 0 ? Number(((kpi!.approvedCount / totalDecisions) * 100).toFixed(1)) : 0
-  const rejectionRate  = totalDecisions > 0 ? Number(((kpi!.rejectedCount  / totalDecisions) * 100).toFixed(1)) : 0
+  const approvalRate   = totalDecisions > 0 ? Number(((kpi!.approvedCount / totalDecisions) * 100).toFixed(2)) : 0
+  const rejectionRate  = totalDecisions > 0 ? Number(((kpi!.rejectedCount  / totalDecisions) * 100).toFixed(2)) : 0
   const days = Math.max(1, (new Date(filters.dateTo).getTime() - new Date(filters.dateFrom).getTime()) / 86400000)
   const throughput = totalDecisions > 0 ? Math.round(((kpi!.approvedCount + kpi!.rejectedCount) / days)) : 0
 
@@ -308,8 +308,8 @@ export default function Dashboard() {
             <KPICard key={`kpi-rejection-${refreshTick}`} title="Rejection Rate" value={rejectionRate} unit="%" icon={Icons.rejection} accentColor="#FFD0D4" bgGradient="linear-gradient(140deg,#D47A87,#B95A68)" invertTrend tone="hero" size="lg" />
             <KPICard key={`kpi-avg-${refreshTick}`} title="Avg Cycle Time" value={Math.round(kpi?.avgCycleTimeHours??0)} unit="h" icon={Icons.cycle} accentColor="#FFE0C0" bgGradient="linear-gradient(140deg,#D8AF85,#BF946C)" tone="hero" size="lg" />
 
-            <KPICard key={`kpi-bottle-${refreshTick}`} title="Bottleneck Rate" value={Number((kpi?.bottleneckRate ?? 0).toFixed(1))} unit="%" icon={Icons.bottleneck} accentColor="#7879F5" bgGradient="linear-gradient(140deg,#A27BFF,#8F55F3)" tone="soft" size="md" />
-            <KPICard key={`kpi-comp-${refreshTick}`} title="Compliance Rate" value={Number((kpi?.complianceRate??0).toFixed(1))} unit="%" icon={Icons.compliance} accentColor="#41A471" bgGradient="linear-gradient(140deg,#26CC95,#0A9871)" tone="soft" size="md" />
+            <KPICard key={`kpi-bottle-${refreshTick}`} title="Bottleneck Rate" value={Number((kpi?.bottleneckRate ?? 0).toFixed(2))} unit="%" icon={Icons.bottleneck} accentColor="#7879F5" bgGradient="linear-gradient(140deg,#A27BFF,#8F55F3)" tone="soft" size="md" />
+            <KPICard key={`kpi-comp-${refreshTick}`} title="Compliance Rate" value={Number((kpi?.complianceRate??0).toFixed(2))} unit="%" icon={Icons.compliance} accentColor="#41A471" bgGradient="linear-gradient(140deg,#26CC95,#0A9871)" tone="soft" size="md" />
             <KPICard key={`kpi-viol-${refreshTick}`} title="Violation Count" value={kpi?.violationCount??0} icon={Icons.violation} accentColor="#E47179" bgGradient="linear-gradient(140deg,#F76772,#D04555)" invertTrend tone="soft" size="md" />
             <KPICard key={`kpi-throughput-${refreshTick}`} title="Decision Throughput" value={throughput} unit="/day" icon={Icons.throughput} accentColor="#7D67DA" bgGradient="linear-gradient(140deg,#A181FF,#8050E2)" tone="soft" size="md" />
 
@@ -318,7 +318,7 @@ export default function Dashboard() {
                 key={`kpi-pending-${refreshTick}`} 
                 title="Decisions Pending Count" 
                 value={kpi?.pendingCount ?? 0} 
-                helperValue={totalDecisions > 0 ? `${((kpi!.pendingCount / totalDecisions) * 100).toFixed(1)}%` : ""}
+                helperValue={totalDecisions > 0 ? `${((kpi!.pendingCount / totalDecisions) * 100).toFixed(2)}%` : ""}
                 icon={Icons.pending} 
                 accentColor="#3E78F0" 
                 bgGradient="linear-gradient(140deg,#6A95FF,#4179E5)" 

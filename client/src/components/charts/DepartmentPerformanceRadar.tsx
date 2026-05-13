@@ -55,11 +55,11 @@ export default function DepartmentPerformanceRadar() {
 
             return {
               department: dept.label,
-              "Approval Rate": Number(approvalRate.toFixed(1)),
-              "Compliance Rate": Number(complianceRate.toFixed(1)),
-              "Throughput": Number(throughput.toFixed(1)),
-              "Risk Score": Number(riskScore.toFixed(1)),
-              "Efficiency": Number(efficiency.toFixed(1))
+              "Approval Rate": Number(approvalRate.toFixed(2)),
+              "Compliance Rate": Number(complianceRate.toFixed(2)),
+              "Throughput": Number(throughput.toFixed(2)),
+              "Risk Score": Number(riskScore.toFixed(2)),
+              "Efficiency": Number(efficiency.toFixed(2))
             }
           })
         )
@@ -150,7 +150,7 @@ export default function DepartmentPerformanceRadar() {
             fontFamily: "'Outfit', sans-serif",
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
           }}
-          formatter={(value) => `${Number(value).toFixed(1)}`}
+          formatter={(value) => `${Number(value).toFixed(2)}`}
           labelStyle={{ color: "#374151", fontWeight: 700 }}
         />
         

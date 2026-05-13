@@ -58,7 +58,7 @@ export default function RiskTable({ data, onRowClick }: Props) {
                     />
                   </div>
                   <span className="text-gray-700 font-mono text-xs w-10">
-                    {entry.riskScore.toFixed(1)}
+                    {entry.riskScore.toFixed(2)}
                   </span>
                 </div>
               </td>

@@ -3,23 +3,11 @@ import ReactECharts from "echarts-for-react"
 import type { EChartsOption } from "echarts"
 import type { IFilter, IComplianceTrendSeries } from "../../types"
 import { getComplianceTrend } from "../../services/api"
+import { getDepartmentColor } from "../../utils/departmentColors"
 
 interface Props {
   filters: IFilter
 }
-
-/*
-  ECharts default colour palette — 10 distinct colours.
-  One colour per department line, assigned in order.
-  ECharts uses this automatically if you don't set 'color'
-  on individual series, but we set it explicitly here
-  so the legend colours are predictable.
-*/
-const DEPT_COLORS = [
-  "#3B82F6", "#10B981", "#F59E0B",
-  "#8B5CF6", "#EF4444", "#06B6D4",
-  "#F97316", "#84CC16", "#EC4899", "#6366F1"
-]
 
 export default function ComplianceTrendChart({ filters }: Props) {
   const [data, setData] = useState<IComplianceTrendSeries[]>([])
@@ -102,7 +90,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
     name: dept.department,
     type: "line",
     smooth: true,
-    color: DEPT_COLORS[idx % DEPT_COLORS.length],
+    color: getDepartmentColor(dept.department),
     data: periodKeys.map((periodKey) => {
       const point = dept.data.find((d) => d.date === periodKey)
       return point ? point.complianceRate : null
@@ -130,7 +118,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
 
   const option: EChartsOption = {
     grid: { top: 30, right: 20, bottom: 50, left: 50 },
-    color: DEPT_COLORS,
+    color: data.map(dept => getDepartmentColor(dept.department)),
     tooltip: {
       trigger: "axis",
       backgroundColor: "white",
@@ -145,7 +133,7 @@ export default function ComplianceTrendChart({ filters }: Props) {
         const periodKey = periodKeys[params[0]?.dataIndex] ?? ""
         const lines = params.map((p: any) =>
           `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:6px"></span>` +
-          `${p.seriesName}: <b>${(p.value ?? 0).toFixed(1)}%</b>`
+          `${p.seriesName}: <b>${(p.value ?? 0).toFixed(2)}%</b>`
         ).join("<br/>")
         return `<div style="font-family:Outfit;font-size:12px"><div style="color:#64748B;margin-bottom:4px">${formatTooltipTitle(periodKey)}</div>${lines}</div>`
       }
