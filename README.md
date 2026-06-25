@@ -26,39 +26,39 @@ Here is a glimpse of Gov Vision in action:
 
 | Dashboard | Decision Analytics |
 | :---: | :---: |
-| <img src="./WebAPP/1.%20Dashboard.png" alt="Dashboard" width="600" /> | <img src="./WebAPP/2.%20Decision%20analytics.png" alt="Decision Analytics" width="600" /> |
+| ![Dashboard](./documentation/WebAPP/1.%20Dashboard.png) | ![Decision Analytics](./documentation/WebAPP/2.%20Decision%20analytics.png) |
 
 | Decision Details | Compliance |
 | :---: | :---: |
-| <img src="./WebAPP/3.%20Decision.png" alt="Decision Details" width="600" /> | <img src="./WebAPP/4.%20compliance.png" alt="Compliance" width="600" /> |
+| ![Decision Details](./documentation/WebAPP/3.%20Decision.png) | ![Compliance](./documentation/WebAPP/4.%20compliance.png) |
 
 | Department Performance | Anomaly Detection 1 |
 | :---: | :---: |
-| <img src="./WebAPP/5.%20DEPARTMENT%20PERFORMANCE.png" alt="Department Performance" width="600" /> | <img src="./WebAPP/6.%20Anomaly%20detection.png" alt="Anomaly Detection 1" width="600" /> |
+| ![Department Performance](./documentation/WebAPP/5.%20DEPARTMENT%20PERFORMANCE.png) | ![Anomaly Detection 1](./documentation/WebAPP/6.%20Anomaly%20detection.png) |
 
 | Anomaly Detection 2 | Anomaly Detection 3 |
 | :---: | :---: |
-| <img src="./WebAPP/7.%20Anomaly%20detection.png" alt="Anomaly Detection 2" width="600" /> | <img src="./WebAPP/8.%20Anomaly%20detection.png" alt="Anomaly Detection 3" width="600" /> |
+| ![Anomaly Detection 2](./documentation/WebAPP/7.%20Anomaly%20detection.png) | ![Anomaly Detection 3](./documentation/WebAPP/8.%20Anomaly%20detection.png) |
 
 | Forecast | Delay Forecast |
 | :---: | :---: |
-| <img src="./WebAPP/9.%20Forecast.png" alt="Forecast" width="600" /> | <img src="./WebAPP/10.%20delay%20forecast.png" alt="Delay Forecast" width="600" /> |
+| ![Forecast](./documentation/WebAPP/9.%20Forecast.png) | ![Delay Forecast](./documentation/WebAPP/10.%20delay%20forecast.png) |
 
 | Risk Scoring | Risk Features |
 | :---: | :---: |
-| <img src="./WebAPP/11.%20risk%20scoring.png" alt="Risk Scoring" width="600" /> | <img src="./WebAPP/12.%20risk%20feature.png" alt="Risk Features" width="600" /> |
+| ![Risk Scoring](./documentation/WebAPP/11.%20risk%20scoring.png) | ![Risk Features](./documentation/WebAPP/12.%20risk%20feature.png) |
 
 | Report Builder 1 | Report Builder 2 |
 | :---: | :---: |
-| <img src="./WebAPP/13%20report%20builder%201.png" alt="Report Builder 1" width="600" /> | <img src="./WebAPP/14%20report%20builder%202.png" alt="Report Builder 2" width="600" /> |
+| ![Report Builder 1](./documentation/WebAPP/13%20report%20builder%201.png) | ![Report Builder 2](./documentation/WebAPP/14%20report%20builder%202.png) |
 
 | Report Builder 3 | Report Builder 4 |
 | :---: | :---: |
-| <img src="./WebAPP/15%20report%20builder%203.png" alt="Report Builder 3" width="600" /> | <img src="./WebAPP/16%20report%20builder%204.png.png" alt="Report Builder 4" width="600" /> |
+| ![Report Builder 3](./documentation/WebAPP/15%20report%20builder%203.png) | ![Report Builder 4](./documentation/WebAPP/16%20report%20builder%204.png.png) |
 
 | Additional View 1 | Additional View 2 |
 | :---: | :---: |
-| <img src="./WebAPP/17%20.png" alt="Additional View 1" width="600" /> | <img src="./WebAPP/18.png" alt="Additional View 2" width="600" /> |
+| ![Additional View 1](./documentation/WebAPP/17%20.png) | ![Additional View 2](./documentation/WebAPP/18.png) |
 
 ---
 
