@@ -11,6 +11,8 @@ type RiskFeatureVector = {
 	hourOfDaySubmitted: number
 	revisionCount: number
 	stageCount: number
+	rejectionCount: number
+	cycleTimeHours: number
 	department: string
 	priority: string
 }
@@ -38,7 +40,7 @@ export async function runRiskScoringJob(): Promise<void> {
 	const features: RiskFeatureVector[] = []
 
 	const decisions = await m1Decision.find({ departmentId: { $in: filteredDepartments }, source: 'ai_workflow' })
-		.select("departmentId hourOfDaySubmitted revisionCount stageCount priority").lean()
+		.select("departmentId hourOfDaySubmitted revisionCount stageCount rejectionCount cycleTimeHours priority").lean()
 
 	for (const d of decisions) {
 		features.push({
@@ -46,8 +48,10 @@ export async function runRiskScoringJob(): Promise<void> {
 			hourOfDaySubmitted: d.hourOfDaySubmitted || 12,
 			revisionCount: d.revisionCount || 0,
 			stageCount: d.stageCount || 1,
+			rejectionCount: (d.rejectionCount as number) || 0,
+			cycleTimeHours: (d.cycleTimeHours as number) || 0,
 			department: (d.departmentId || "unknown") as string,
-			priority: (d.priority || "normal") as string
+			priority: (d.priority || "normal") as string,
 		})
 	}
 

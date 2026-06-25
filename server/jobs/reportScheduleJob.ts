@@ -102,10 +102,10 @@ export async function runScheduleCheck(): Promise<void> {
   }
 }
 
-cron.schedule("0 * * * *", () => {
+cron.schedule("0 6 * * *", () => {
   runScheduleCheck().catch((err) =>
     console.error("[ScheduleJob] Uncaught error:", err)
   )
 })
 
-console.log("[ScheduleJob] Scheduled: checks every hour.")
+console.log("[ScheduleJob] Scheduled: checks daily at 06:00.")

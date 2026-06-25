@@ -51,6 +51,23 @@ def require_service_key(x_service_key: str = Header(...)):
         )
 
 
+def _spawn_training_script(script_name: str) -> dict:
+    """Launch a training script in the background and return a status payload."""
+    train_script = os.path.join(
+        os.path.dirname(__file__),
+        "training",
+        script_name,
+    )
+    subprocess.Popen(
+        [sys.executable, train_script],
+        cwd=os.path.dirname(__file__),
+    )
+    return {
+        "status": "training started",
+        "script": f"training/{script_name}",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
@@ -146,19 +163,21 @@ def models_train():
 
     Requires header:  x-service-key: <SERVICE_KEY>
     """
-    train_script = os.path.join(
-        os.path.dirname(__file__),
-        "training",
-        "train_isolation_forest.py",
-    )
-    subprocess.Popen(
-        [sys.executable, train_script],
-        cwd=os.path.dirname(__file__),
-    )
-    return {
-        "status": "training started",
-        "script": "training/train_isolation_forest.py",
-    }
+    return _spawn_training_script("train_isolation_forest.py")
+
+
+@app.post("/ml/forecast/train", dependencies=[Depends(require_service_key)])
+def forecast_train():
+    """
+    Trigger a background retraining run of the Prophet forecast models.
+
+    This training script builds one model per supported target:
+    volume, delay, approval_rate, rejection_rate, pending_workload, and
+    sla_misses.
+
+    Requires header:  x-service-key: <SERVICE_KEY>
+    """
+    return _spawn_training_script("train_prophet.py")
 
 
 @app.post("/ml/forecast/predict", dependencies=[Depends(require_service_key)])

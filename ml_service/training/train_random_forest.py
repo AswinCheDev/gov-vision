@@ -52,10 +52,16 @@ DEPT_NAME_TO_ID = {
     "compliance": "FI001",
 }
 
-# New features as per NEWDATASET.MD
-# Note: We keep hourOfDaySubmitted and stageCount here as supervised models (RF) 
-# can learn patterns from them even if they are 'noisy' for unsupervised models.
-NUMERIC_COLS = ["hourOfDaySubmitted", "revisionCount", "stageCount"]
+# Feature columns — only direct database fields, no engineered features.
+# daysOverSLA and status excluded: they define the label (target leakage).
+# 7 features: 5 original + rejectionCount + cycleTimeHours.
+NUMERIC_COLS = [
+    "hourOfDaySubmitted",
+    "revisionCount",
+    "stageCount",
+    "rejectionCount",
+    "cycleTimeHours",
+]
 CATEGORICAL_COLS = ["department", "priority"]
 FEATURE_COLS = NUMERIC_COLS + CATEGORICAL_COLS
 
@@ -76,12 +82,14 @@ def fetch_dataset() -> pd.DataFrame:
             "priority": 1,
             "hourOfDaySubmitted": 1,
             "revisionCount": 1,
+            "rejectionCount": 1,
+            "cycleTimeHours": 1,
             "stageCount": 1,
             "daysOverSLA": 1,
             "status": 1,
             "_id": 0
         }
-    )
+    )  # daysOverSLA and status fetched only for label assignment
     
     df = pd.DataFrame(list(cursor))
     client.close()
@@ -104,29 +112,41 @@ def fetch_dataset() -> pd.DataFrame:
     # Normalize priority to lowercase (live data uses lowercase)
     if "priority" in df.columns:
         df["priority"] = df["priority"].astype(str).str.strip().str.lower()
+
+    # Normalize status to lowercase (used only for label assignment, not a feature)
+    if "status" in df.columns:
+        df["status"] = df["status"].astype(str).str.strip().str.lower()
+
+    # Coerce daysOverSLA (used only for label assignment, not a feature)
+    if "daysOverSLA" in df.columns:
+        df["daysOverSLA"] = pd.to_numeric(df["daysOverSLA"], errors="coerce").fillna(0.0)
+
+    # Fill missing numeric process features with sensible defaults
+    df["rejectionCount"] = pd.to_numeric(df.get("rejectionCount", 0), errors="coerce").fillna(0.0)
+    df["cycleTimeHours"] = pd.to_numeric(df.get("cycleTimeHours", 0), errors="coerce").fillna(0.0)
     
     # Drop rows with missing essential features
     df = df.dropna(subset=FEATURE_COLS + ["daysOverSLA", "status"])
     print(f"Rows after dropping missing values: {len(df)}")
     
-    # 4-class risk label per Module 3 spec:
-    # 0=Low, 1=Medium, 2=High, 3=Critical
+    # 3-class risk label (Medium class dropped due to zero data):
+    # 0 = Low      → on-time and approved
+    # 1 = High     → any SLA breach ≤5 days
+    # 2 = Critical → >5 days overdue OR explicitly rejected
     def assign_risk_label(row):
         days = float(row["daysOverSLA"] or 0)
         status = str(row["status"]).lower()
         if days == 0 and status == "approved":
             return 0  # Low
-        elif days > 0 and days <= 1 and status != "rejected":
-            return 1  # Medium
-        elif (days > 1 and days <= 5) or status == "rejected":
-            return 2  # High
-        else:  # days > 5
-            return 3  # Critical
+        elif status == "rejected" or days > 5:
+            return 2  # Critical
+        else:  # 0 < days <= 5, or pending/in-progress
+            return 1  # High
 
     df["risk_label"] = df.apply(assign_risk_label, axis=1)
     
     print("Class distribution (BPI training data):")
-    label_names = {0: "Low", 1: "Medium", 2: "High", 3: "Critical"}
+    label_names = {0: "Low", 1: "High", 2: "Critical"}
     for label, name in label_names.items():
         count = (df["risk_label"] == label).sum()
         print(f"  {name} ({label}): {count} ({count/len(df)*100:.1f}%)")
@@ -157,15 +177,17 @@ def main() -> None:
         ]
     )
     
-    print("Training RandomForestClassifier (200 trees)...")
+    print("Training RandomForestClassifier (300 trees, 3-class)...")
     pipeline = Pipeline(
         [
             ("preprocessor", preprocessor),
             (
                 "classifier",
                 RandomForestClassifier(
-                    n_estimators=200,
-                    max_depth=10,
+                    n_estimators=300,
+                    max_depth=15,
+                    min_samples_leaf=5,
+                    max_features="sqrt",
                     class_weight="balanced",
                     random_state=42,
                     n_jobs=-1,
@@ -173,7 +195,7 @@ def main() -> None:
             ),
         ]
     )
-    
+
     pipeline.fit(x_train, y_train)
     
     print("\nModel evaluation on held-out test set:")
@@ -182,8 +204,8 @@ def main() -> None:
         classification_report(
             y_test,
             predictions,
-            target_names=["Low (0)", "Medium (1)", "High (2)", "Critical (3)"],
-            labels=[0, 1, 2, 3],
+            target_names=["Low (0)", "High (1)", "Critical (2)"],
+            labels=[0, 1, 2],
             zero_division=0,
         )
     )
@@ -194,11 +216,11 @@ def main() -> None:
     # 1. Confusion Matrix Heatmap
     plt.figure(figsize=(8, 6))
     cm = confusion_matrix(y_test, predictions)
-    class_names = ['Low', 'Medium', 'High', 'Critical']
+    class_names = ['Low', 'High', 'Critical']
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=class_names,
                 yticklabels=class_names)
-    plt.title('Chart 1: Risk Model Confusion Matrix (4-Class)')
+    plt.title('Chart 1: Risk Model Confusion Matrix (3-Class)')
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
     plt.show()

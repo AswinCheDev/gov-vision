@@ -6,7 +6,8 @@ export interface IReportSchedule extends Document {
     type: string;
     format: string;
     departments: string[];
-    dateRangeMode: "last_7_days" | "last_30_days" | "last_90_days";
+    widgets: string[];
+    dateRangeMode?: "last_7_days" | "last_30_days" | "last_90_days";
   };
   frequency: "daily" | "weekly" | "monthly";
   nextRunAt: Date;

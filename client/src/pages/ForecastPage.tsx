@@ -316,9 +316,11 @@ export default function ForecastPage() {
     <div style={{ minHeight: "100vh", padding: "28px", background: "linear-gradient(180deg, #F5F6FA 0%, #EEF2F7 100%)" }}>
       <div style={{ width: "100%" }}>
         <div style={{ marginBottom: "22px" }}>
-          <p style={{ margin: 0, fontSize: "12px", color: "#8A94A6", textTransform: "uppercase", letterSpacing: "0.12em" }}>
-            Forecast
-          </p>
+          <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+            <span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span>Deep Insights</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span style={{ color: "#374151", fontWeight: 600 }}>Forecast</span>
+          </div>
           <h1 style={{ margin: "8px 0 6px", fontSize: "30px", lineHeight: 1.1, fontWeight: 800, color: "#1E293B", fontFamily: "'Outfit', sans-serif" }}>
             {TARGET_META[target].title}
           </h1>

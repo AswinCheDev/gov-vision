@@ -66,6 +66,11 @@ export default function ReportSchedules() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+            <span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span>Reports</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span style={{ color: "#374151", fontWeight: 600 }}>Scheduled Reports</span>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">Scheduled Reports</h1>
           <p className="text-sm text-gray-500 mt-1">
             Automated report delivery. Schedules run at 6:00 AM on their due date.

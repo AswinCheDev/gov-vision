@@ -1,0 +1,21 @@
+BEGIN
+    // Retrieve relevant records based on scope
+    IF departmentId refers to the entire organisation THEN
+        Fetch all decisions made between startDate and endDate
+        Fetch all decisions currently in a pending state
+        Fetch all violations recorded between startDate and endDate
+    ELSE
+        Fetch decisions for the given department within the date range
+        Fetch pending decisions belonging to that department
+        Fetch violations for that department within the date range
+    END IF
+    // Derive basic decision counts
+    Set totalDecisions   ← number of fetched decisions
+    Set approvedCount    ← number of decisions whose status is "approved"
+    Set rejectedCount    ← number of decisions whose status is "rejected"
+    // Compute average processing cycle time
+    Identify the subset of decisions that have a recorded completion timestamp
+    For each resolved decision, note its cycle time in hours
+    Set averageCycleTime ← sum of all cycle times ÷ number of resolved decisions
+    // Compute compliance rate
+t

@@ -115,6 +115,11 @@ export default function KPIConfigPage() {
     <div style={{ padding: 24, background: "#F5F6FA", minHeight: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 18 }}>
         <div>
+          <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+            <span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span>Admin</span><span style={{ color: "#CBD5E1" }}>›</span>
+            <span style={{ color: "#374151", fontWeight: 600 }}>KPI Config</span>
+          </div>
           <h1 style={{ margin: 0, fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, color: "#0F172A" }}>KPI Config</h1>
           <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: 13 }}>Adjust target and threshold values for the dashboard KPI cards.</p>
         </div>

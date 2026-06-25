@@ -4,11 +4,14 @@ import type {
   IAnomaly,
   IAnomalyGroup,
   IFeatureImportance,
-  IFeatureValues
+  IFeatureValues,
+  Severity
 } from "../types"
 import { RISK_LEVEL_THEME } from "../types"
 import AnomalyTableRow from "../components/AnomalyTableRow"
 import FeatureImportanceChart from "../components/FeatureImportanceChart"
+import AnomalyBreakdownModal from "../components/AnomalyBreakdownModal"
+import SingleAnomalyModal from "../components/SingleAnomalyModal"
 
 const INITIAL_GROUPS: IAnomalyGroup = {
   Critical: [],
@@ -88,54 +91,146 @@ function StatCard({
   label,
   value,
   sub,
-  subColor,
-  accentColor,
-  accentBg,
-  accentBorder
+  gradient,
+  icon,
+  onClick
 }: {
   label: string
   value: number
   sub: string
-  subColor: string
-  accentColor?: string
-  accentBg?: string
-  accentBorder?: string
+  gradient: string
+  icon?: React.ReactNode
+  onClick?: () => void
 }) {
   return (
     <div
+      onClick={onClick}
       style={{
-        background: accentBg ?? "#fff",
-        border: `1px solid ${accentBorder ?? "#E6EBF2"}`,
-        borderRadius: 14,
-        padding: "16px 18px",
+        background: gradient,
+        borderRadius: 16,
+        padding: "16px 20px",
         display: "flex",
         flexDirection: "column",
-        gap: 4
+        gap: 6,
+        position: "relative",
+        overflow: "hidden",
+        color: "white",
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        minHeight: "140px",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+        cursor: onClick ? "pointer" : "default",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease"
+      }}
+      onMouseEnter={e => {
+        if (onClick) {
+          e.currentTarget.style.transform = "translateY(-2px)"
+          e.currentTarget.style.boxShadow = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+        }
+      }}
+      onMouseLeave={e => {
+        if (onClick) {
+          e.currentTarget.style.transform = "translateY(0)"
+          e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+        }
       }}
     >
+      {/* Background circles */}
+      <div style={{
+        position: "absolute",
+        top: "-20px", right: "-20px",
+        width: "90px", height: "90px",
+        borderRadius: "50%",
+        background: "rgba(255,255,255,0.16)",
+        pointerEvents: "none"
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: "-30px", right: "10px",
+        width: "110px", height: "110px",
+        borderRadius: "50%",
+        background: "rgba(255,255,255,0.12)",
+        pointerEvents: "none"
+      }} />
+
+      {/* Ambient dot texture */}
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        backgroundImage: "radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px)",
+        backgroundSize: "6px 6px",
+        opacity: 0.3,
+        pointerEvents: "none"
+      }} />
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", zIndex: 1 }}>
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 800,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.9)",
+            fontFamily: "'Outfit', sans-serif"
+          }}
+        >
+          {label}
+        </span>
+        {icon && (
+          <div style={{
+            width: 24, height: 24,
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.3)"
+          }}>
+            {icon}
+          </div>
+        )}
+      </div>
+
       <span
         style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: accentColor ?? "#94A3B8"
-        }}
-      >
-        {label}
-      </span>
-      <span
-        style={{
-          fontSize: 28,
+          fontSize: 54,
           fontWeight: 800,
-          color: accentColor ?? "#0F172A",
-          lineHeight: 1.1,
-          letterSpacing: "-0.5px"
+          color: "white",
+          lineHeight: 1,
+          letterSpacing: "-2px",
+          zIndex: 1,
+          fontFamily: "'Outfit', sans-serif",
+          marginTop: "auto"
         }}
       >
         {value}
       </span>
-      <span style={{ fontSize: 11, color: subColor, fontWeight: 500, marginTop: 2 }}>{sub}</span>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", zIndex: 1, marginTop: 4 }}>
+        <div style={{ minHeight: "18px" }}>
+          {sub && (
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500, fontFamily: "'Outfit', sans-serif" }}>
+              {sub}
+            </span>
+          )}
+        </div>
+        {onClick && (
+          <span style={{ 
+            fontSize: "10px", 
+            fontWeight: 800, 
+            textTransform: "uppercase", 
+            letterSpacing: "0.05em", 
+            color: "rgba(255,255,255,0.9)",
+            background: "rgba(255,255,255,0.15)",
+            padding: "3px 8px",
+            borderRadius: "6px",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.2)"
+          }}>
+            View Breakdown
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -276,6 +371,8 @@ export default function DeepInsights() {
   const [error, setError] = useState<string | null>(null)
   const [severityFilter, setSeverityFilter] = useState("All")
   const [deptFilter, setDeptFilter] = useState("All")
+  const [breakdownSeverity, setBreakdownSeverity] = useState<Severity | null>(null)
+  const [selectedAnomaly, setSelectedAnomaly] = useState<IAnomaly | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -324,6 +421,14 @@ export default function DeepInsights() {
     }))
   }
 
+  const StatIcons = {
+    total: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>,
+    critical: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+    high: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} width="14" height="14"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>,
+    medium: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+    low: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} width="14" height="14"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  }
+
   const severityDropdownOptions = severityOptions.map(opt => ({
     label: opt === "All" ? "All severities" : opt,
     value: opt
@@ -359,17 +464,10 @@ export default function DeepInsights() {
 
           {/* Breadcrumb + Title */}
           <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 10
-              }}
-            >
-              <span style={{ fontSize: 12, color: "#94A3B8" }}>Home</span>
-              <span style={{ color: "#CBD5E1", fontSize: 12 }}>›</span>
-              <span style={{ fontSize: 12, color: "#64748B", fontWeight: 500 }}>Anomaly Detection</span>
+            <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+              <span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+              <span>Deep Insights</span><span style={{ color: "#CBD5E1" }}>›</span>
+              <span style={{ color: "#374151", fontWeight: 600 }}>Anomaly Detection</span>
             </div>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div>
@@ -424,45 +522,40 @@ export default function DeepInsights() {
               label="Total Anomalies"
               value={anomalyData.total}
               sub="Across all departments"
-              subColor="#94A3B8"
-              accentBg="#fff"
-              accentBorder="#E6EBF2"
+              gradient="linear-gradient(135deg, #8250FF, #4D12E8)"
+              icon={StatIcons.total}
             />
             <StatCard
               label="Critical"
               value={anomalyData.Critical.length}
               sub="Needs immediate action"
-              subColor={RISK_LEVEL_THEME.Critical.text}
-              accentColor={RISK_LEVEL_THEME.Critical.text}
-              accentBg={RISK_LEVEL_THEME.Critical.bg}
-              accentBorder={RISK_LEVEL_THEME.Critical.border}
+              gradient="linear-gradient(135deg, #FF2E54, #D1002D)"
+              icon={StatIcons.critical}
+              onClick={() => setBreakdownSeverity("Critical")}
             />
             <StatCard
               label="High"
               value={anomalyData.High.length}
               sub="Review within 24h"
-              subColor={RISK_LEVEL_THEME.High.text}
-              accentColor={RISK_LEVEL_THEME.High.text}
-              accentBg={RISK_LEVEL_THEME.High.bg}
-              accentBorder={RISK_LEVEL_THEME.High.border}
+              gradient="linear-gradient(135deg, #FF9F0A, #E67E00)"
+              icon={StatIcons.high}
+              onClick={() => setBreakdownSeverity("High")}
             />
             <StatCard
               label="Medium"
               value={anomalyData.Medium.length}
-              sub="Monitor & schedule"
-              subColor={RISK_LEVEL_THEME.Medium.text}
-              accentColor={RISK_LEVEL_THEME.Medium.text}
-              accentBg={RISK_LEVEL_THEME.Medium.bg}
-              accentBorder={RISK_LEVEL_THEME.Medium.border}
+              sub=""
+              gradient="linear-gradient(135deg, #FFD60A, #FFB300)"
+              icon={StatIcons.medium}
+              onClick={() => setBreakdownSeverity("Medium")}
             />
             <StatCard
               label="Low"
               value={anomalyData.Low.length}
-              sub="Watch for changes"
-              subColor={RISK_LEVEL_THEME.Low.text}
-              accentColor={RISK_LEVEL_THEME.Low.text}
-              accentBg={RISK_LEVEL_THEME.Low.bg}
-              accentBorder={RISK_LEVEL_THEME.Low.border}
+              sub=""
+              gradient="linear-gradient(135deg, #00E699, #00A669)"
+              icon={StatIcons.low}
+              onClick={() => setBreakdownSeverity("Low")}
             />
           </div>
 
@@ -558,34 +651,42 @@ export default function DeepInsights() {
                   style={{
                     width: "100%",
                     borderCollapse: "collapse",
-                    minWidth: 1090,
                     tableLayout: "fixed"
                   }}
                 >
                   <thead>
                     <tr style={{ background: "#FAFBFC" }}>
-                      {tableHeaders.map((header, idx) => {
-                        const widths = ["100px", "160px", "140px", "100px", "75px", "95px", "85px", "135px", "100px"]
-                        return (
-                          <th
-                            key={header}
-                            style={{
-                              textAlign: idx >= 4 && idx <= 6 ? "center" : "left",
-                              padding: "13px 8px",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: "#94A3B8",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.07em",
-                              borderBottom: "1px solid #F1F5F9",
-                              whiteSpace: "nowrap",
-                              width: widths[idx]
-                            }}
-                          >
-                            {header}
-                          </th>
-                        )
-                      })}
+                      {[
+                        { label: "DATE", w: "10%" },
+                        { label: "DECISION ID", w: "16%" },
+                        { label: "DEPARTMENT", w: "16%" },
+                        { label: "SEVERITY", w: "9%" },
+                        { label: "SCORE", w: "9%" },
+                        { label: "CYCLE TIME", w: "8%" },
+                        { label: "REJECTIONS", w: "8%" },
+                        { label: "STATUS", w: "10%" },
+                        { label: "BREAKDOWN", w: "7%" },
+                        { label: "ACTION", w: "7%" }
+                      ].map((col, idx) => (
+                        <th
+                          key={col.label}
+                          style={{
+                            textAlign: "left",
+                            padding: "14px 12px",
+                            paddingLeft: idx === 0 ? "32px" : "12px",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            color: "#94A3B8",
+                            textTransform: "uppercase",
+                            letterSpacing: "1px",
+                            borderBottom: "1px solid #F1F5F9",
+                            whiteSpace: "nowrap",
+                            width: col.w
+                          }}
+                        >
+                          {col.label}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                 </table>
@@ -630,6 +731,7 @@ export default function DeepInsights() {
                         key={anomaly._id}
                         anomaly={anomaly}
                         onAcknowledge={handleAcknowledge}
+                        onClick={setSelectedAnomaly}
                       />
                     ))}
                   </tbody>
@@ -677,6 +779,21 @@ export default function DeepInsights() {
           {/* Feature Importance Chart */}
           <FeatureImportanceChart data={featureImportance} />
         </main>
+
+        {breakdownSeverity && (
+          <AnomalyBreakdownModal
+            severity={breakdownSeverity}
+            anomalies={anomalyData[breakdownSeverity]}
+            onClose={() => setBreakdownSeverity(null)}
+          />
+        )}
+
+        {selectedAnomaly && (
+          <SingleAnomalyModal
+            anomaly={selectedAnomaly}
+            onClose={() => setSelectedAnomaly(null)}
+          />
+        )}
       </div>
     </div>
   )

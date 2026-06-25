@@ -21,6 +21,7 @@ router.post(
 				dateFrom: req.body.dateFrom || "2026-01-01",
 				dateTo: req.body.dateTo || new Date().toISOString().split("T")[0],
 				departments: Array.isArray(req.body.departments) ? req.body.departments : [],
+				widgets: Array.isArray(req.body.widgets) ? req.body.widgets : ["KPI Table"],
 				requestedBy: req.user?.userId || "unknown",
 			}
 
@@ -44,10 +45,14 @@ router.post(
 	}
 )
 
+import { sendReportEmail } from "../services/emailService"
+import { getAppBaseUrl } from "../utils/reportHelpers"
+import jwt from "jsonwebtoken"
+
 router.post(
 	"/schedules/:id/run",
 	validateJWT,
-	requireRole(["admin", "manager"]),
+	requireRole(["admin", "manager", "analyst", "executive"]),
 	async (req: Request, res: Response) => {
 		try {
 			const schedule = await ReportSchedule.findById(req.params.id)
@@ -69,6 +74,7 @@ router.post(
 				dateFrom: from.toISOString().split("T")[0],
 				dateTo: today.toISOString().split("T")[0],
 				departments: schedule.reportConfig?.departments || [],
+				widgets: schedule.reportConfig?.widgets || ["KPI Table"],
 				requestedBy: req.user?.userId || "unknown"
 			})
 
@@ -90,8 +96,28 @@ router.post(
 				generatedAt: new Date()
 			})
 
-			return res.json({ reportId: report._id })
+			// Update schedule status
+			schedule.lastRunAt = new Date()
+			schedule.lastRunStatus = "success"
+			await schedule.save()
+
+			// Send the notification email (non-blocking)
+			if (schedule.recipients && schedule.recipients.length > 0) {
+				try {
+					await sendReportEmail(
+						schedule.recipients,
+						schedule.name,
+						getAppBaseUrl(req),
+						String(report._id)
+					)
+				} catch (emailErr: any) {
+					console.error("[ReportAPI] Email delivery failed:", emailErr.message)
+				}
+			}
+
+			return res.json({ reportId: report._id, status: "success" })
 		} catch (err: any) {
+			console.error("[ReportAPI] Run Now failed:", err.message)
 			return res.status(500).json({ error: err.message })
 		}
 	}
@@ -151,6 +177,36 @@ router.get(
 			return res.download(report.filePath, filename)
 		} catch (err: any) {
 			return res.status(500).json({ error: err.message })
+		}
+	}
+)
+
+// Public download route — validates a signed download token from the URL query string
+// This allows download links in emails to work without a browser JWT
+router.get(
+	"/:id/download-public",
+	async (req: Request, res: Response) => {
+		try {
+			const { token } = req.query
+			if (!token) return res.status(401).json({ error: "No token provided" })
+
+			const decoded = jwt.verify(
+				token as string,
+				process.env.JWT_SECRET || "secret"
+			) as { reportId: string; type: string }
+
+			if (decoded.type !== "download" || decoded.reportId !== req.params.id) {
+				return res.status(403).json({ error: "Invalid download token" })
+			}
+
+			const report = await Report.findById(req.params.id)
+			if (!report) return res.status(404).json({ error: "Report not found" })
+			if (!fs.existsSync(report.filePath)) return res.status(404).json({ error: "File not found on disk" })
+
+			const filename = path.basename(report.filePath)
+			return res.download(report.filePath, filename)
+		} catch (err: any) {
+			return res.status(401).json({ error: "Token expired or invalid" })
 		}
 	}
 )

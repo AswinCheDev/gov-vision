@@ -27,6 +27,25 @@ TARGET_MODEL_PREFIX = {
 }
 
 
+# Maps department IDs / short-codes to all known naming variants so we can
+# find a model regardless of which naming convention was used during training.
+DEPT_ALIASES: Dict[str, List[str]] = {
+	"CS005": ["CS005", "CS", "Customer_Service"],
+	"CS": ["CS", "CS005", "Customer_Service"],
+	"Customer_Service": ["Customer_Service", "CS005", "CS"],
+	"FI001": ["FI001", "Finance"],
+	"Finance": ["Finance", "FI001"],
+	"HR002": ["HR002", "HR", "Human_Resources"],
+	"HR": ["HR", "HR002", "Human_Resources"],
+	"Human_Resources": ["Human_Resources", "HR002", "HR"],
+	"IT004": ["IT004", "IT", "Information_Technology"],
+	"IT": ["IT", "IT004", "Information_Technology"],
+	"Information_Technology": ["Information_Technology", "IT004", "IT"],
+	"OP003": ["OP003", "Operations"],
+	"Operations": ["Operations", "OP003"],
+}
+
+
 def load_prophet_model(dept_id: str, target: str) -> Prophet:
 	"""Load a trained Prophet model for a department or the org-level model."""
 	if target not in TARGET_MODEL_PREFIX:
@@ -35,16 +54,23 @@ def load_prophet_model(dept_id: str, target: str) -> Prophet:
 			"'rejection_rate', 'pending_workload', or 'sla_misses'"
 		)
 
-	safe_dept_id = dept_id.replace("/", "_").replace(" ", "_")
 	prefix = TARGET_MODEL_PREFIX[target]
+	safe_dept_id = dept_id.replace("/", "_").replace(" ", "_")
+
+	# Try the exact department ID first.
 	path = MODELS_DIR / f"{prefix}_{safe_dept_id}.pkl"
+	if path.exists():
+		return joblib.load(path)
 
-	if not path.exists():
-		raise FileNotFoundError(
-			f"No {target} Prophet model found for department: {dept_id}"
-		)
+	# Fall back through known aliases for this department.
+	for alias in DEPT_ALIASES.get(safe_dept_id, []):
+		alt_path = MODELS_DIR / f"{prefix}_{alias}.pkl"
+		if alt_path.exists():
+			return joblib.load(alt_path)
 
-	return joblib.load(path)
+	raise FileNotFoundError(
+		f"No {target} Prophet model found for department: {dept_id}"
+	)
 
 
 def generate_forecast(payload: dict) -> Dict[str, object]:

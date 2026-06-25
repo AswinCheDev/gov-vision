@@ -10,20 +10,23 @@ import pandas as pd
 MODELS_DIR = Path(__file__).resolve().parents[2] / "models" / "risk"
 MODEL_PATH = MODELS_DIR / "random_forest.pkl"
 
-# Matches train_random_forest.py
+# Matches train_random_forest.py — 7 direct DB fields, no engineered features.
+# daysOverSLA and status excluded to prevent target leakage.
 FEATURE_COLS = [
     "hourOfDaySubmitted",
     "revisionCount",
     "stageCount",
+    "rejectionCount",
+    "cycleTimeHours",
     "department",
-    "priority"
+    "priority",
 ]
 
+# 3-class map — Medium class removed (had only 5 training samples)
 LEVEL_MAP = {
     0: "low",
-    1: "medium",
-    2: "high",
-    3: "critical",
+    1: "high",
+    2: "critical",
 }
 
 
@@ -55,20 +58,28 @@ def score_departments(features: list[dict]) -> list[dict]:
 
 	results: list[dict] = []
 	for index, row in enumerate(features):
-		predicted_class = int(predictions[index])
-		# Score = weighted probability across classes (0-100)
-		# Weight: low=0, medium=33, high=66, critical=100
-		weights = [0.0, 33.0, 66.0, 100.0]
+		# 3-class model foundation: 0=Low, 1=High, 2=Critical
+		# We map these to weights that allow a "Medium" score to emerge
+		# when the model is uncertain between Low and High.
+		weights = [0.0, 66.0, 100.0] 
 		probs = probabilities[index]
-		# Pad weights in case model has fewer classes
-		effective_weights = weights[:len(probs)]
-		risk_score = sum(p * w for p, w in zip(probs, effective_weights))
+		risk_score = sum(p * w for p, w in zip(probs, weights))
+
+		# Determine 4-tier level for UI compatibility
+		if risk_score >= 80:
+			level = "critical"
+		elif risk_score >= 60:
+			level = "high"
+		elif risk_score >= 40:
+			level = "medium"
+		else:
+			level = "low"
 
 		results.append(
 			{
 				"dept": row.get("dept", "unknown"),
 				"score": round(risk_score, 1),
-				"level": LEVEL_MAP.get(predicted_class, "low"),
+				"level": level,
 				"featureImportance": {
 					name: round(float(importance), 4)
 					for name, importance in zip(FEATURE_COLS, importances)

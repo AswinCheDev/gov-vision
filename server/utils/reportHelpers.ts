@@ -1,3 +1,4 @@
+import { Request } from "express"
 import KPISnapshot from "../models/KPI_Snapshot"
 import Anomaly from "../models/Anomaly"
 
@@ -11,6 +12,7 @@ export interface ReportData {
 }
 
 export interface KPIRow {
+  deptId: string
   dept: string
   approvalRate: number
   avgCycleTime: number
@@ -18,6 +20,20 @@ export interface KPIRow {
   complianceRate: number
   totalDecisions: number
   anomalyCount: number
+}
+
+const DEPT_NAME_MAP: Record<string, string> = {
+  FI001: "Finance",
+  IT004: "Information Technology",
+  OP003: "Operations",
+  HR002: "Human Resources",
+  CS005: "Customer Service",
+  Finance: "Finance",
+  "Information Technology": "Information Technology",
+  Operations: "Operations",
+  "Human Resources": "Human Resources",
+  "Customer Service": "Customer Service",
+  ORG: "Organisation",
 }
 
 export interface AnomalyRow {
@@ -74,13 +90,16 @@ export async function assembleReportData(config: {
     }
   }
 
-  const kpiRows: KPIRow[] = Array.from(byDept.values()).map((snap) => {
+  const kpiRowsRaw: KPIRow[] = Array.from(byDept.values()).map((snap) => {
     const totalDecisions = Number(snap.totalDecisions || 0)
     const approvedCount = Number(snap.approvedCount || 0)
     const approvalRate = totalDecisions > 0 ? (approvedCount / totalDecisions) * 100 : 0
+    const rawId = String(snap.departmentId || "unknown")
+    const deptName = DEPT_NAME_MAP[rawId] || rawId
 
     return {
-      dept: String(snap.departmentId || "unknown"),
+      deptId: rawId,
+      dept: deptName,
       approvalRate: Number(approvalRate.toFixed(2)),
       avgCycleTime: Number(snap.avgCycleTimeHours || 0),
       riskLevel: titleCaseRisk(snap.riskLevel),
@@ -89,6 +108,16 @@ export async function assembleReportData(config: {
       anomalyCount: Number(snap.anomalyCount || 0),
     }
   })
+
+  // Deduplicate by department name — keep the row with actual data (higher totalDecisions)
+  const dedupedByName = new Map<string, KPIRow>()
+  for (const row of kpiRowsRaw) {
+    const existing = dedupedByName.get(row.dept)
+    if (!existing || row.totalDecisions > existing.totalDecisions) {
+      dedupedByName.set(row.dept, row)
+    }
+  }
+  const kpiRows: KPIRow[] = Array.from(dedupedByName.values())
 
 
   const anomalyFilter: Record<string, unknown> = {}
@@ -124,4 +153,10 @@ export async function assembleReportData(config: {
     dateTo: config.dateTo,
     departments: config.departments,
   }
+}
+
+export function getAppBaseUrl(req?: Request): string {
+  if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL
+  if (req) return `${req.protocol}://${req.get("host")}`
+  return "http://localhost:5002"
 }

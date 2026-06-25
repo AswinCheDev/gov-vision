@@ -18,14 +18,14 @@ export default function DateRangePicker({
     background: "white",
     border: "1px solid #E2E8F0",
     borderRadius: "8px",
-    padding: "8px 12px",
-    fontSize: "13px",
+    padding: "10px 16px",
+    fontSize: "15px",
     fontFamily: "'Outfit', sans-serif",
     cursor: "pointer",
-    width: "130px",
+    width: "160px",
     outline: "none",
-    color: "#334155",
-    fontWeight: 500
+    color: "#0F172A",
+    fontWeight: 600
   };
 
   return (

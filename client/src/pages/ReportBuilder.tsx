@@ -38,7 +38,6 @@ const REPORT_TYPES: Array<{
   },
 ];
 
-// Use department codes as in the backend/database
 const DEPARTMENTS = [
   "Finance",
   "Human Resources",
@@ -47,18 +46,16 @@ const DEPARTMENTS = [
   "Customer Service"
 ];
 
-// Get today's date and 90 days ago as default range
 const today = new Date().toISOString().split("T")[0];
 const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
   .toISOString()
   .split("T")[0];
 
 export default function ReportBuilder() {
-  // Form state
   const [reportType, setReportType] = useState<ReportType>("executive_summary");
   const [dateFrom, setDateFrom] = useState(ninetyDaysAgo);
   const [dateTo, setDateTo] = useState(today);
-  const [selectedDepts, setSelectedDepts] = useState<string[]>([]); // Empty = all depts
+  const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
   const [format, setFormat] = useState<ReportFormat>("csv");
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>(["KPI Table"]);
   const [templateName, setTemplateName] = useState("Weekly Executive Summary");
@@ -77,7 +74,6 @@ export default function ReportBuilder() {
   const [templateMessage, setTemplateMessage] = useState<string | null>(null);
   const [savingTemplate, setSavingTemplate] = useState(false);
 
-  // UI state
   const [loading, setLoading] = useState(false);
   const [generatedId, setGeneratedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,12 +85,10 @@ export default function ReportBuilder() {
       .catch(() => setTemplates([]));
   }, []);
 
-  // Toggle a department in/out of the selected list
   function toggleDept(dept: string) {
     setSelectedDepts((prev) =>
       prev.includes(dept) ? prev.filter((d) => d !== dept) : [...prev, dept],
     );
-    // Reset any previous generation result when config changes
     setGeneratedId(null);
     setSuccess(false);
   }
@@ -130,7 +124,6 @@ export default function ReportBuilder() {
     setSuccess(false);
 
     try {
-      // If no departments selected (organization-wide), send both ORG and all departments
       let departmentsToSend = selectedDepts;
       if (selectedDepts.length === 0) {
         departmentsToSend = ["ORG", ...DEPARTMENTS];
@@ -146,12 +139,8 @@ export default function ReportBuilder() {
 
       setGeneratedId(result.reportId);
       setSuccess(true);
-      console.log("[ReportBuilder] Report generated:", result.reportId);
     } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          "Report generation failed. Check the backend is running.",
-      );
+      setError(err.response?.data?.error || "Report generation failed.");
     } finally {
       setLoading(false);
     }
@@ -178,6 +167,7 @@ export default function ReportBuilder() {
         format,
       });
       setTemplateMessage("Template saved successfully.");
+      setTimeout(() => setTemplateMessage(null), 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save template.");
     } finally {
@@ -214,46 +204,20 @@ export default function ReportBuilder() {
 
   return (
     <div className="p-6 max-w-6xl">
-      {/* Page header */}
       <div className="mb-6">
+        <div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+          <span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+          <span>Reports</span><span style={{ color: "#CBD5E1" }}>›</span>
+          <span style={{ color: "#374151", fontWeight: 600 }}>Report Builder</span>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900">Report Builder</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Configure and generate governance reports in CSV, Excel, or PDF
-          format.
+          Configure and generate governance reports in CSV, Excel, or PDF format.
         </p>
       </div>
 
       <div className="mb-8">
         <ReportsSubnav />
-      </div>
-
-      <div className="mb-8 rounded-2xl border bg-white p-4 shadow-sm space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium text-gray-600">Load Template</label>
-            <select
-              value={selectedTemplateId}
-              onChange={(e) => applyTemplate(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            >
-              <option value="">Choose a saved template...</option>
-              {templates.map((template) => (
-                <option key={template._id} value={template._id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium text-gray-600">Template Name</label>
-            <input
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-              placeholder="e.g. Weekly Governance Pack"
-            />
-          </div>
-        </div>
       </div>
 
       {templateMessage && (
@@ -265,11 +229,8 @@ export default function ReportBuilder() {
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Left Column */}
         <div className="flex-[2] space-y-8">
-          {/* Section: Report Type */}
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-gray-800">
-              Report Type
-            </h2>
+            <h2 className="text-base font-semibold text-gray-800">Report Type</h2>
             <div className="grid grid-cols-2 gap-3">
               {REPORT_TYPES.map((rt) => (
                 <label
@@ -292,9 +253,7 @@ export default function ReportBuilder() {
                       }}
                       className="accent-gray-800"
                     />
-                    <span className="font-semibold text-sm text-gray-800">
-                      {rt.label}
-                    </span>
+                    <span className="font-semibold text-sm text-gray-800">{rt.label}</span>
                   </div>
                   <p className="text-xs text-gray-500 ml-5">{rt.description}</p>
                 </label>
@@ -302,7 +261,6 @@ export default function ReportBuilder() {
             </div>
           </div>
 
-          {/* Section: Widgets */}
           <div className="space-y-3">
             <h2 className="text-base font-semibold text-gray-800">Include Widgets</h2>
             <div className="flex flex-wrap gap-2">
@@ -323,7 +281,6 @@ export default function ReportBuilder() {
             </div>
           </div>
 
-          {/* Section: Date Range */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-800">Date Range</h2>
@@ -348,16 +305,11 @@ export default function ReportBuilder() {
             />
           </div>
 
-          {/* Section: Departments */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-800">
-                Departments
-              </h2>
+              <h2 className="text-base font-semibold text-gray-800">Departments</h2>
               <span className="text-xs text-gray-400">
-                {selectedDepts.length === 0
-                  ? "All departments selected"
-                  : `${selectedDepts.length} selected`}
+                {selectedDepts.length === 0 ? "All departments selected" : `${selectedDepts.length} selected`}
               </span>
             </div>
             <button
@@ -389,9 +341,7 @@ export default function ReportBuilder() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400">
-              Leave all unselected to include all departments in the report.
-            </p>
+            <p className="text-xs text-gray-400">Leave all unselected to include all departments in the report.</p>
             <p className="text-xs text-gray-500">
               Estimated: ~{estimatedDecisions} decisions · {selectedDepts.length === 0 ? DEPARTMENTS.length : selectedDepts.length} departments · {estimatedDays} days
             </p>
@@ -400,11 +350,54 @@ export default function ReportBuilder() {
 
         {/* Right Column */}
         <div className="flex-1 min-w-[320px] max-w-[400px] space-y-8">
-          {/* Section: Format */}
+          {/* Section: Templates */}
+          <div className="space-y-4">
+            <h2 className="text-base font-semibold text-gray-800">Template Configuration</h2>
+            <div style={{ 
+              display: "inline-flex", 
+              gap: "16px", 
+              background: "#F8FAFC", 
+              border: "1px solid #E2E8F0", 
+              borderRadius: "16px", 
+              padding: "20px",
+              whiteSpace: "nowrap",
+              minWidth: "100%"
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "1px" }}>Load Template</label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => applyTemplate(e.target.value)}
+                  style={{
+                    width: "200px", borderRadius: "12px", border: "1px solid #E2E8F0",
+                    background: "white", padding: "10px 12px", fontSize: "13px",
+                    fontWeight: 600, color: "#334155", outline: "none"
+                  }}
+                >
+                  <option value="">Choose template...</option>
+                  {templates.map((template) => (
+                    <option key={template._id} value={template._id}>{template.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "1px" }}>Template Name</label>
+                <input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  style={{
+                    width: "220px", borderRadius: "12px", border: "1px solid #E2E8F0",
+                    background: "white", padding: "10px 12px", fontSize: "13px",
+                    fontWeight: 600, color: "#334155", outline: "none"
+                  }}
+                  placeholder="Name..."
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-gray-800">
-              Output Format
-            </h2>
+            <h2 className="text-base font-semibold text-gray-800">Output Format</h2>
             <FormatSelector
               selected={format}
               onChange={(f) => {
@@ -414,7 +407,6 @@ export default function ReportBuilder() {
             />
           </div>
 
-          {/* Section: Generate */}
           <div className="space-y-4 pt-2">
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
@@ -425,12 +417,8 @@ export default function ReportBuilder() {
             {success && generatedId && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
                 <div>
-                  <p className="text-gray-800 font-semibold text-sm">
-                    Report generated successfully
-                  </p>
-                  <p className="text-gray-500 text-xs mt-0.5">
-                    Click Download to save the file
-                  </p>
+                  <p className="text-gray-800 font-semibold text-sm">Report generated successfully</p>
+                  <p className="text-gray-500 text-xs mt-0.5">Click Download to save the file</p>
                 </div>
                 <button
                   onClick={handleDownload}
@@ -444,29 +432,28 @@ export default function ReportBuilder() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="w-full bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white py-3.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+              className="w-full border-2 border-gray-800 text-gray-800 bg-white hover:bg-gray-800 hover:text-white active:bg-gray-900 disabled:opacity-50 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin">⟳</span>
-                  Generating report...
-                </>
-              ) : (
-                "Generate Report"
-              )}
+              {loading ? "Generating report..." : "Generate Report"}
             </button>
 
             <button
-              onClick={handleSaveTemplate}
+              onClick={() => {
+                console.log("[ReportBuilder] Save Template clicked");
+                void handleSaveTemplate();
+              }}
               disabled={savingTemplate}
-              className="w-full border border-gray-200 bg-white text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-50"
+              className="w-full border border-gray-300 bg-white text-gray-700 py-3 rounded-xl font-semibold text-sm transition-all hover:bg-gray-200 active:bg-gray-300 active:scale-[0.98] cursor-pointer"
             >
               {savingTemplate ? "Saving template..." : "Save as Template"}
             </button>
 
             <button
-              onClick={() => setShowScheduleModal(true)}
-              className="w-full border border-dashed border-gray-300 bg-gray-50 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-100"
+              onClick={() => {
+                console.log("[ReportBuilder] Schedule Report clicked");
+                setShowScheduleModal(true);
+              }}
+              className="w-full border border-gray-300 bg-gray-50 text-gray-700 py-3 rounded-xl font-semibold text-sm transition-all hover:bg-gray-200 active:bg-gray-300 active:scale-[0.98] cursor-pointer"
             >
               Schedule This Report
             </button>
@@ -477,10 +464,7 @@ export default function ReportBuilder() {
       <AddScheduleModal
         open={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
-        onCreated={(schedule) => {
-          console.log("[ReportBuilder] Schedule created:", schedule._id)
-          setShowScheduleModal(false)
-        }}
+        onCreated={(schedule) => setShowScheduleModal(false)}
         initialValues={{
           reportType,
           format,

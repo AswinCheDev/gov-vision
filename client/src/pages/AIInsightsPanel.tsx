@@ -58,6 +58,11 @@ export default function AIInsightsPanel() {
 	return (
 		<div className="p-6 space-y-6">
 			<div>
+				<div style={{ fontSize: "12px", color: "#94A3B8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px", fontFamily: "'Outfit', sans-serif" }}>
+					<span>Home</span><span style={{ color: "#CBD5E1" }}>›</span>
+					<span>Admin</span><span style={{ color: "#CBD5E1" }}>›</span>
+					<span style={{ color: "#374151", fontWeight: 600 }}>AI/ML Insights</span>
+				</div>
 				<h1 className="text-2xl font-bold text-gray-900">AI/ML Insights</h1>
 				<p className="text-sm text-gray-500 mt-1">Unified anomaly, forecast, risk, and model status view.</p>
 			</div>

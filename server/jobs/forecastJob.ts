@@ -10,7 +10,9 @@ const TARGETS = [
 	"volume",
 	"delay",
 	"approval_rate",
-	"rejection_rate"
+	"rejection_rate",
+	"pending_workload",
+	"sla_misses"
 ] as const
 
 export async function runForecastJob(): Promise<void> {

@@ -61,7 +61,6 @@ def get_decisions() -> pd.DataFrame:
 	decisions = list(
 		db["m1_training_decisions"].find(
 			{
-				"completedAt": {"$exists": True, "$ne": None},
 				"createdAt": {"$exists": True, "$ne": None},
 				"$or": [
 					{"department": {"$exists": True, "$ne": None}},
@@ -77,6 +76,8 @@ def get_decisions() -> pd.DataFrame:
 				"department": 1,
 				"departmentId": 1,
 				"departmentName": 1,
+				"status": 1,
+				"daysOverSLA": 1,
 			},
 		)
 	)
