@@ -159,6 +159,3 @@ npm run dev
 
 ---
 
-<div align="center">
-  <p>Built with ❤️ for better governance and analytics.</p>
-</div>
