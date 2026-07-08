@@ -10,7 +10,7 @@
 
 ---
 
-## ✨ Features
+##  Features
 - **📊 Real-time Analytics Dashboard**: Interactive charts and rich data visualizations using Recharts and ECharts.
 - **🤖 AI-Powered Insights**: Dedicated Machine Learning microservice for anomaly detection, risk scoring, and time-series forecasting (using Prophet & Scikit-Learn).
 - **⚙️ Automated Jobs**: Scheduled background processes for report generation, model retraining, and scheduled risk assessments using `node-cron`.
