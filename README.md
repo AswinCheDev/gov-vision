@@ -1,11 +1,11 @@
 <div align="center">
-  <h1>🏛️ Gov Vision</h1>
+  <h1> Gov Vision</h1>
   <p><strong>A Comprehensive Platform for Government Analytics, Risk Scoring, and AI-Driven Forecasting</strong></p>
 </div>
 
 <br />
 
-## 📖 Introduction
+## Introduction
 **Gov Vision** is an advanced, full-stack application tailored for enterprise and government analytics. It integrates real-time event tracking, AI-powered anomaly detection, predictive forecasting, and automated risk scoring to deliver actionable insights. With a modern React frontend and a robust microservices backend (Node.js & Python ML), Gov Vision ensures high performance, scalability, and security to facilitate data-driven decision-making.
 
 ---
@@ -20,7 +20,7 @@
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 Here is a glimpse of Gov Vision in action:
 
@@ -66,7 +66,7 @@ Here is a glimpse of Gov Vision in action:
 
 We built Gov Vision using modern, reliable technologies and libraries to ensure an optimal developer and user experience.
 
-### 💻 Frontend (Client)
+### Frontend (Client)
 <p>
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -80,7 +80,7 @@ We built Gov Vision using modern, reliable technologies and libraries to ensure 
 * **Visualization**: ECharts, Recharts
 * **Utilities**: Axios, HTML2Canvas, React Datepicker
 
-### 🗄️ Backend (Node.js Server)
+### Backend (Node.js Server)
 <p>
   <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
@@ -94,7 +94,7 @@ We built Gov Vision using modern, reliable technologies and libraries to ensure 
 * **Utilities**: Node-cron (task scheduling), Nodemailer, Morgan (logging)
 * **Reporting**: ExcelJS, jsPDF, json2csv
 
-### 🧠 Machine Learning Service (Python)
+### Machine Learning Service (Python)
 <p>
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI" />
@@ -109,7 +109,7 @@ We built Gov Vision using modern, reliable technologies and libraries to ensure 
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```text
 gov_vision/
@@ -123,7 +123,7 @@ gov_vision/
 
 ---
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)
